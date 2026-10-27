@@ -15,6 +15,7 @@ from __future__ import annotations
 import csv
 import datetime
 import io
+import logging
 import re
 import uuid
 from datetime import timedelta, timezone
@@ -44,6 +45,8 @@ from backend.models_crm_pipeline import (
     TipoPipelineEnum,
 )
 from backend.models_evangelism import Asistencia, GrupoEvangelismo, ParticipanteGrupo, SesionGrupo
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -650,6 +653,7 @@ def get_pastoral_executive_summary(
                 }
             )
         except Exception:
+            logger.debug("Best-effort get_pastoral_executive_summary failed; retaining fallback")
             continue
 
     overall_attendance_rate = (

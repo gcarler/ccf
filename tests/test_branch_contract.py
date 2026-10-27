@@ -87,3 +87,10 @@ def test_projects_owns_pmi_services_but_no_unrelated_apis():
     assert ownership_violations("feature/projects-pmi-quality", paths) == []
     foreign = ["backend/api/messaging.py", "backend/services/academic_engine_service.py"]
     assert ownership_violations("feature/projects-pmi-quality", foreign) == foreign
+
+
+def test_finance_has_an_explicit_owner_and_rejects_foreign_module_files():
+    own = ["backend/api/finance_suite.py", "tests/test_finance_multi_approval.py", "docs/FINANCE_API_CONTRACTS.md"]
+    assert ownership_violations("feature/finance-quality", own) == []
+    foreign = ["backend/api/projects.py", "backend/api/crm/personas.py"]
+    assert ownership_violations("feature/finance-quality", foreign) == foreign
