@@ -187,116 +187,140 @@ archivos: si Academy toca Evangelismo, CMS u otro módulo, el push se rechaza.
 - [ ] 6. Migraciones aplicadas en staging: `alembic upgrade head`
 - [ ] 7. Backup de BD ejecutado antes del deploy
 
-### Deploy Paso a Paso (VPS Directo)
+### Backend: versión revisada y estado compartido
+
+El backend usa código de un worktree separado en
+`/root/ccf-releases/backend/<SHA40>`. El directorio de trabajo de PM2 continúa
+siendo `/root/ccf`: se conservan `.env`, `backend/.env`, `uploads/`, `static/`,
+`analytics/` y `backend/data/`. Los dos archivos de entorno se enlazan como
+configuración ignorada; los adjuntos, claves VAPID y estado de workspace usan
+`CCF_RUNTIME_DIR`. No se reemplaza ningún directorio de código por enlaces.
+
+El starter rechaza el arranque si no existe un puntero de release revisado;
+nunca vuelve al checkout mutable por ausencia de configuración.
+
+No es necesario actualizar ningún archivo del checkout mutable para adoptar
+este flujo. Ejecutar el helper desde el código limpio revisado. El primer
+proceso PM2 puede apuntar a `/root/ccf/scripts/start_backend.sh`; el helper
+reapunta su launcher a `scripts/start_backend.sh` del release nuevo, con cwd
+`/root/ccf`. Los siguientes launchers deben pertenecer a releases limpios
+integrados en `origin/main`; cualquier ruta ajena se rechaza.
+
+La actualización usa un snapshot JSON privado (modo 0600) con un único proceso.
+`scripts/rebind_backend_pm2.cjs` lee el snapshot y aplica únicamente la RPC nativa
+PM2 `restartProcessId`, dirigida al mismo `pm_id`, con `current_conf` para
+launcher, cwd y entorno capturado. El resto de configuración permanece en el
+daemon: intérprete, política de reinicios/memoria, logs e identidad. La API
+nativa evita que el CLI filtre `pm_exec_path` y evita mezclar variables de
+pruebas del shell del despliegue. Se verifica de nuevo identidad, cwd y launcher
+antes de emitir la RPC. No se elimina/recrea el proceso ni se reinician otros
+servicios. El JSON no se imprime ni se adjunta a logs:
+puede contener secretos. Se guarda el estado PM2 tras el smoke satisfactorio. Se requiere Node y el
+módulo PM2 instalado; se resuelve localmente o mediante `npm root -g`.
+`CCF_PM2_MODULE`, si se usa, debe apuntar a una instalación absoluta confiable.
 
 ```bash
-# 1. Backup de producción (OBLIGATORIO)
-pg_dump -U ccf_user ccf_production > /root/backups/prod_$(date +%Y%m%d_%H%M%S).sql
+# Desde el worktree limpio que contiene los scripts revisados.
+# SHA40 corresponde a un commit integrado y validado de origin/main.
+CCF_RUNTIME_DIR=/root/ccf bash scripts/deploy_backend.sh <SHA40>
+```
 
-# 2. Aplicar migraciones
-cd /root/ccf
-source venv/bin/activate
-alembic upgrade head
+La primera adopción exige declarar además una versión estable revisada para
+rollback. Debe incluir el soporte `CCF_RUNTIME_DIR` de los cuatro módulos de
+adjuntos/estado y los tres helpers de arranque/RPC. El preflight verifica
+sintaxis Bash, Python y Node en ambos releases; se rechazan versiones anteriores
+para no separar datos al volver atrás. En la primera adopción aún no existe un
+launcher de releases probado en servicio: el fallback puede compartir el helper
+candidato revisado. Esa limitación inicial se registra; no equivale a disponer
+de un launcher anterior probado. En despliegues posteriores, el rollback usa el
+launcher limpio anterior, evitando depender del helper nuevo si éste falla. No se deduce del HEAD del checkout porque puede haberse movido
+mientras el proceso anterior seguía en memoria:
 
-# 3. Bajar la app
-./stopccf
+```bash
+CCF_RUNTIME_DIR=/root/ccf bash scripts/deploy_backend.sh <SHA40> \
+  --rollback-sha <SHA40-estable-anterior>
+```
 
-# 4. Pull del código nuevo
-git pull origin main
+Sin SHA explícito, el comando resuelve el último `origin/main` tras fetch. Para
+CI/CD siempre se pasa el SHA exacto que superó los gates. El helper verifica
+que cada release pertenece a `origin/main`, está limpio y coincide con su SHA.
+Un lock exclusivo en `/root/ccf-runtime/backend/deploy.lock` impide dos deploys
+simultáneos. No hace pull, checkout, reset ni stash del checkout mutable.
 
-# 5. Reconstruir frontend si hubo cambios UI
-cd /root/ccf/frontend
-npm run build
+Antes de cambiar el puntero o reiniciar, crea un backup PostgreSQL mediante
+`scripts/db_backup.sh`, usando la configuración efectiva del proceso vivo. El
+backup se verifica con `pg_restore --list`, se guarda con permisos privados en
+`/root/ccf-runtime/backend/backups/` y un fallo cancela el despliegue. Las
+credenciales no se imprimen ni se pasan por argumentos. No se ejecutan
+migraciones automáticamente; si el cambio requiere esquema, su plan reversible
+se valida y aplica por separado desde el release limpio, después del backup.
 
-# 6. Reiniciar procesos con PM2
-cd /root/ccf
-pm2 restart ccf-backend-staging --update-env
-pm2 restart ccf-frontend-staging --update-env
+El puntero `/root/ccf-runtime/backend/current.json` se sustituye atómicamente.
+El launcher limpio ejecuta uvicorn con `--app-dir` del release, `PYTHONPATH` del
+release y cwd canónico. Tras restart, el helper exige un PID nuevo, SHA/ruta de origen
+esperados en el proceso y HTTP 200 en `/healthz`. Si falla, restaura el puntero
+anterior, reaplica el launcher limpio anterior y comprueba el rollback.
+Así tampoco vuelve al launcher del checkout mutable si falla la adopción.
+Se conservan los worktrees de release como evidencia y para rollback; no se
+eliminan mientras sean origen de código o launcher activo.
 
-# 7. Verificar health checks
+Verificación pública, sólo lectura:
+
+```bash
 curl -f https://ministerioselfaro.org/healthz
 curl -f https://ministerioselfaro.org/api/system/health
+```
+
+### Frontend: procedimiento canónico
+
+Ejecutar siempre el wrapper desde un worktree revisado limpio separado del
+runtime. No es necesario avanzar ni limpiar `/root/ccf` para desplegar:
+
+```bash
+CCF_RUNTIME_DIR=/root/ccf bash /root/ccf-releases/deploy/<SHA40>/scripts/deploy_frontend.sh
 curl -f https://ministerioselfaro.org/
-python3 scripts/auditing/production_readiness.py
+curl -I https://ministerioselfaro.org/plataforma
 ```
 
-### Deploy Rápido (Hotfix — solo backend)
+El wrapper toma el lock exclusivo externo
+`/root/ccf-runtime/frontend/deploy.lock`, comprueba locks locales de Next y
+procesos build activos sin borrarlos. Usa las variables del proceso vivo y
+archivos de entorno ignorados del runtime, verificando que no cambien durante
+la compilación. Instala dependencias en el worktree mediante `npm ci` y construye
+mediante el `build-safe` del repositorio. Logs privados:
+`/root/ccf-runtime/frontend/build.log`. Nunca compila dentro del cwd servido.
 
-```bash
-cd /root/ccf
-git pull origin main
-pm2 restart ccf-backend-staging --update-env
-```
+`package.json`, lockfile y todos los assets públicos deben coincidir con el
+runtime; si difieren, el deploy se detiene antes del build/restart. Esos cambios
+requieren un rollout separado de dependencias/assets, fuera de este flujo. Los
+archivos `next.config.*` sólo se sustituyen si siguen idénticos a su HEAD
+canónico o a la configuración del último manifest de deploy. Cualquier edición
+local desconocida se conserva y bloquea la operación. No se copian otros archivos de
+código ni se descartan cambios de otros agentes.
 
-> **Nota:** En esta instancia el frontend se sirve con `pm2`. Si hay cambios frontend, se requiere `cd frontend && npm run build` antes de `pm2 restart ccf-frontend-staging --update-env`. No mezclar `pm2` con `./startccf` o con `npm run start` manual.
+El artefacto se copia primero a `.next-build` del runtime. Se conserva la copia
+real servida en `.next-old` y la configuración anterior en
+`/root/ccf-runtime/frontend/rollback-config/` hasta que termine el smoke con PID
+nuevo y HTTP 200. Si falla promoción, reinicio o smoke, se restauran artefacto y
+configuración en el cwd real y se verifica el rollback. Un `.next-old`/staging
+previo nunca se borra automáticamente: debe revisarse su propietario y estado.
+El manifest privado `frontend/current.json` registra SHA, BUILD_ID y hashes de
+configuración. No ejecutar builds, copias de `.next` o reinicios paralelos.
 
-### Deploy desde worktree alternativo (cuando `/root/ccf` no está en `main`)
+### Workflow de despliegue
 
-> **⚠ Caso especial registrado el 2026-08-05 (ses_030a420dfffe).**
-> Aplica cuando el worktree principal `/root/ccf` está en una feature branch con trabajo
-> en curso (working tree dirty) y necesitas deployar `main` (u otra rama) **sin perturbar**
-> ese trabajo. Es el patrón correcto cuando se trabaja con `git worktree`.
+`.github/workflows/deploy.yml` sólo acepta CI exitoso de `main` del propio
+repositorio o una ejecución manual desde `main` con SHA completo y CI exitoso.
+Comprueba que el SHA siga siendo exactamente `origin/main`, crea un worktree
+detached y no hace pull/reset/stash del runtime. La concurrencia no cancela un
+deploy activo; un lock global del VPS protege también otras ejecuciones.
 
-**Por qué el procedimiento normal no alcanza aquí:** el proceso PM2 `ccf-frontend-staging`
-tiene `exec cwd: /root/ccf/frontend` y sirve Next.js leyendo `.next` de **ese** directorio.
-Si construyes `.next` en un worktree distinto (ej. `/root/ccf-main/frontend/.next`) y solo
-haces `pm2 restart ccf-frontend-staging`, el proceso **sigue sirviendo el viejo `.next`**
-del cwd PM2. El reinicio no recoge builds de otros worktrees.
-
-```bash
-# 1. Crear worktree temporal sobre la rama a deployar (main)
-cd /root/ccf
-git worktree add /root/ccf-main main
-
-# 2. Instalar deps y build dentro del worktree temporal
-cd /root/ccf-main/frontend
-npm install --no-audit --no-fund --legacy-peer-deps   # --legacy-peer-deps requerido por
-                                                       # conflicto vite/@vitejs/plugin-react
-node_modules/.bin/next build                          # exit 0
-
-# 3. Backup del .next que PM2 sirve ahora (punto de rollback)
-mv /root/ccf/frontend/.next /root/ccf/frontend/.next.backup-$(date +%Y%m%d-%H%M%S)
-
-# 4. Swap: copiar el nuevo .next al cwd de PM2
-cp -a /root/ccf-main/frontend/.next /root/ccf/frontend/.next
-#    (paths absolutos embebidos en .next/types/*.ts son dev-only; no afectan runtime)
-
-# 5. Reiniciar frontend (backend NO necesita nada salvo que también haya cambiado)
-pm2 restart ccf-frontend-staging
-#    Si también cambió el backend: pm2 restart ccf-backend-staging
-#    (backend NO tiene el acoplamiento de cwd — reimporta Python al restart, es 1 paso)
-
-# 6. Verificar con fingerprinting de chunk (definitivo)
-curl -s https://ministerioselfaro.org/plataforma/admin/reports | grep -oE 'app/[^"]+/page-[a-z0-9]+\.js' | head -1
-#   → extrae ej. "app/plataforma/admin/reports/page-340be6eed4ccfc2a.js"
-find /root/ccf/frontend/.next -name "page-340be6eed4ccfc2a.js"   # debe existir
-find /root/ccf/frontend/.next.backup-* -name "page-340be6eed4ccfc2a.js" 2>/dev/null
-#   NO debe existir en el backup = confirms que se sirve el build NUEVO
-
-# 7. Health checks
-curl -f https://ministerioselfaro.org/healthz
-curl -f https://ministerioselfaro.org/                      # HTTP 200 home público
-curl -f -o /dev/null https://ministerioselfaro.org/plataforma # HTTP 307 (login redirect, esperado)
-
-# 8. Limpiar worktree temporal cuando ya no se necesite
-cd /root/ccf
-git worktree remove /root/ccf-main --force
-git worktree prune
-```
-
-> **Rollback** (si el deploy falla o se detecta regresión):
-> ```bash
-> rm -rf /root/ccf/frontend/.next
-> mv /root/ccf/frontend/.next.backup-<TIMESTAMP> /root/ccf/frontend/.next
-> pm2 restart ccf-frontend-staging
-> ```
-
-> **Verificación alterna rápida:** comparar el `BUILD_ID` servido vs el esperado:
-> ```bash
-> cat /root/ccf/frontend/.next/BUILD_ID       # build NUEVO
-> ls /root/ccf/frontend/.next.backup-*        # backups disponibles
-> # El BUILD_ID debe cambiar entre el nuevo y cualquier backup (cada `next build` lo regenera)
-> ```
+Antes de tocar el frontend, el preflight backend valida fuente, rollback,
+launchers y un backup PostgreSQL. La primera adopción requiere `rollback_sha`.
+Si no existe manifest frontend, reconstruye conservadoramente. Después sólo
+omite el frontend cuando el manifest demuestra que no hubo cambios en su árbol.
+Un fallo frontend evita el restart backend. Backend repite backup y guardas
+antes de su propio restart. Finalmente verifica los endpoints públicos.
 
 > **Aclaración de "producción" en este VPS:** nginx (`/etc/nginx/sites-available/ministerioselfaro.org`)
 > proxiea `ministerioselfaro.org` directamente a `127.0.0.1:3000` (frontend) y `127.0.0.1:8000` (backend),
@@ -310,18 +334,18 @@ git worktree prune
 
 ### Rollback Rápido (Cambio de código)
 
+El backend restaura automáticamente la versión anterior si falla su smoke.
+Para un rollback posterior, volver a desplegar el SHA estable revisado con el
+mismo helper; se mantiene el backup previo y se comprueba el proceso y HTTP:
+
 ```bash
-# 1. Revertir el commit
-cd /root/ccf
-git revert HEAD --no-edit
-
-# 2. Bajar y subir la app
-./stopccf
-./startccf
-
-# 3. Verificar
+CCF_RUNTIME_DIR=/root/ccf bash scripts/deploy_backend.sh <SHA40-estable>
 curl -f https://ministerioselfaro.org/healthz
 ```
+
+Un rollback de código no revierte datos ni esquema. Si una migración no es
+compatible con la versión anterior, seguir el plan reversible de esa migración
+antes de cambiar el código. No hacer revert o checkout sobre el árbol mutable.
 
 ### Rollback Completo (con BD)
 

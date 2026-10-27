@@ -2,39 +2,113 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      sha:
+        description: Exact main commit with successful CI (40 lowercase hex characters)
+        required: true
+        type: string
+      rollback_sha:
+        description: Reviewed compatible backend rollback commit (required on first adoption)
+        required: false
+        type: string
   workflow_run:
     workflows: ["CCF CI/CD Pipeline"]
     types: [completed]
     branches: [main]
 
+permissions:
+  contents: read
+  actions: read
+
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  group: deploy-main
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       github.event.workflow_run.event != 'pull_request') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 45
+    env:
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || inputs.sha }}
+      ROLLBACK_SHA: ${{ inputs.rollback_sha }}
+      DEPLOY_REPO: ${{ github.repository }}
     steps:
-      - name: Deploy via SSH
+      - name: Validate exact revision and successful main CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ -z "$ROLLBACK_SHA" || "$ROLLBACK_SHA" =~ ^[0-9a-f]{40}$ ]]
+          gh api --method GET "repos/$DEPLOY_REPO/actions/workflows/ci.yml/runs" \
+            -f head_sha="$DEPLOY_SHA" -f branch=main -f status=completed -f per_page=100 \
+            | jq -e --arg sha "$DEPLOY_SHA" --arg repo "$DEPLOY_REPO" \
+              '.workflow_runs | any(.head_sha == $sha and .head_branch == "main" and .conclusion == "success" and .head_repository.full_name == $repo and .event != "pull_request")' >/dev/null
+
+      - name: Deploy reviewed detached source via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: DEPLOY_SHA,ROLLBACK_SHA,DEPLOY_REPO
+          command_timeout: 40m
           script: |
-            set -e
-            cd /root/ccf
-            git pull origin main
-            # Frontend: secuencia segura build → swap → pm2 restart, solo si hubo
-            # cambios en frontend/ (evita rebuild en pushes solo-backend).
-            # El restart sin rebuild previo dejaba el sitio sirviendo el build
-            # viejo (o chunks huérfanos si un build ajeno tocaba .next en vivo).
-            if git diff --name-only HEAD@{1} HEAD | grep -q '^frontend/'; then
-              bash /root/ccf/scripts/deploy_frontend.sh
-            else
-              echo "Sin cambios en frontend/ — no se reconstruye el frontend"
+            bash -se <<'DEPLOY_SCRIPT'
+            set -euo pipefail
+            umask 077
+            [[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]
+            [[ -z "$ROLLBACK_SHA" || "$ROLLBACK_SHA" =~ ^[0-9a-f]{40}$ ]]
+            RUNTIME=/root/ccf
+            STATE=/root/ccf-runtime
+            mkdir -p "$STATE"
+            exec 9>"$STATE/deploy.lock"
+            flock -n 9
+            case "$(git -C "$RUNTIME" remote get-url origin)" in
+              "git@github.com:$DEPLOY_REPO.git"|"https://github.com/$DEPLOY_REPO.git"|"https://github.com/$DEPLOY_REPO") ;;
+              *) echo 'Deployment repository mismatch' >&2; exit 1 ;;
+            esac
+            git -C "$RUNTIME" fetch origin main
+            [[ "$(git -C "$RUNTIME" rev-parse origin/main)" == "$DEPLOY_SHA" ]]
+            SOURCE="/root/ccf-releases/deploy/$DEPLOY_SHA"
+            mkdir -p "$(dirname "$SOURCE")"
+            if [[ ! -e "$SOURCE" ]]; then
+              git -C "$RUNTIME" worktree add --detach "$SOURCE" "$DEPLOY_SHA"
             fi
-            /usr/local/bin/pm2 restart ccf-backend-staging
-            /usr/local/bin/pm2 status
+            [[ "$(git -C "$SOURCE" rev-parse HEAD)" == "$DEPLOY_SHA" ]]
+            [[ -z "$(git -C "$SOURCE" status --porcelain --untracked-files=all)" ]]
+            ROLLBACK_ARGS=()
+            if [[ -n "$ROLLBACK_SHA" ]]; then
+              ROLLBACK_ARGS=(--rollback-sha "$ROLLBACK_SHA")
+            fi
+            # Refuse an invalid first-adoption/rollback before touching frontend.
+            "$RUNTIME/venv/bin/python" "$SOURCE/scripts/backend_release.py" preflight \
+              "$DEPLOY_SHA" --runtime "$RUNTIME" --repo "$SOURCE" --backup "${ROLLBACK_ARGS[@]}"
+            FRONTEND_REQUIRED=1
+            FRONTEND_MANIFEST="$STATE/frontend/current.json"
+            if [[ -f "$FRONTEND_MANIFEST" ]]; then
+              PREVIOUS_FRONTEND=$("$RUNTIME/venv/bin/python" -c \
+                'import json,sys; print(json.load(open(sys.argv[1]))["sha"])' "$FRONTEND_MANIFEST")
+              [[ "$PREVIOUS_FRONTEND" =~ ^[0-9a-f]{40}$ ]]
+              git -C "$SOURCE" merge-base --is-ancestor "$PREVIOUS_FRONTEND" "$DEPLOY_SHA"
+              if git -C "$SOURCE" diff --quiet "$PREVIOUS_FRONTEND" "$DEPLOY_SHA" -- frontend/; then
+                FRONTEND_REQUIRED=0
+              fi
+            fi
+            if [[ "$FRONTEND_REQUIRED" == 1 ]]; then
+              # Public/dependency/config edit guards run before build or restart.
+              # Any frontend failure prevents the backend restart below.
+              CCF_RUNTIME_DIR="$RUNTIME" bash "$SOURCE/scripts/deploy_frontend.sh"
+            fi
+            CCF_RUNTIME_DIR="$RUNTIME" bash "$SOURCE/scripts/deploy_backend.sh" \
+              "$DEPLOY_SHA" "${ROLLBACK_ARGS[@]}"
+            curl --fail --silent --show-error --max-time 15 https://ministerioselfaro.org/healthz >/dev/null
+            curl --fail --silent --show-error --max-time 15 https://ministerioselfaro.org/ >/dev/null
+            DEPLOY_SCRIPT
