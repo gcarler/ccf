@@ -189,7 +189,7 @@ class FormValidationError(CmsValidationError):
         detail = {"code": self.error_code, "detail": self.detail}
         if self.field_id is not None:
             detail["field_id"] = self.field_id
-        return {"detail": detail}
+        return {**detail, "detail": detail}
 
 
 class InvalidSlugError(CmsValidationError):
