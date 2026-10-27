@@ -169,6 +169,10 @@ const nextConfig = {
     },
     async rewrites() {
         const target = apiProxyTarget || 'http://backend:8000';
+        // H-PROJ-UI-03: el proxy canónico de /api vive en src/middleware.ts
+        // (se ejecuta antes del filesystem, por encima del catch-all público).
+        // Este fallback queda como respaldo para casos que el middleware
+        // ya no intercepte.
         return {
             fallback: [
                 {

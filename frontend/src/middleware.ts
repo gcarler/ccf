@@ -28,6 +28,20 @@ const PLATAFORMA_ROUTES = [
 
 const STATIC_FILE_PATTERN = /\.(?:avif|css|gif|ico|jpg|jpeg|js|json|map|png|svg|txt|webmanifest|woff|woff2)$/i;
 
+// H-PROJ-UI-03: proxy de /api hacia el backend (FastAPI). El rewrite en
+// fallback estaba muerto en build local porque el catch-all (public)/[...slug]
+// coincide antes; y el proxy en beforeFiles con grupo de captura no interpola
+// de forma fiable. El middleware corre ANTES de las rutas del filesystem, así
+// que es la capa canónica para interceptar /api sin sombrear las rutas API
+// locales del propio Next (tasks/mock/analytics/cms/crm).
+const API_PROXY_TARGET = process.env.API_PROXY_TARGET || 'http://backend:8000';
+const LOCAL_API_PREFIXES = ['/api/tasks', '/api/mock', '/api/analytics', '/api/cms', '/api/crm'];
+
+function proxyApiRequest(request: NextRequest): NextResponse {
+    const target = new URL(request.nextUrl.pathname + request.nextUrl.search, API_PROXY_TARGET);
+    return NextResponse.rewrite(target);
+}
+
 function withNoStoreHeaders(response: NextResponse, request: NextRequest) {
     const accept = request.headers.get('accept') || '';
     const isPageRequest = accept.includes('text/html') || accept.includes('text/x-component') || accept.includes('*/*');
@@ -45,8 +59,14 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Skip already-prefixed paths and root-level paths
-    if (pathname.startsWith('/plataforma/') || pathname === '/' || pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.startsWith('/favicon') || pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/reset-password') || pathname.startsWith('/verify-email') || pathname.startsWith('/donate') || pathname.startsWith('/books') || pathname.startsWith('/privacy') || pathname.startsWith('/terms') || pathname.startsWith('/testimonials') || pathname.startsWith('/pastores') || pathname.startsWith('/public') || pathname.startsWith('/auth') || pathname.startsWith('/s/')) {
+    if (pathname.startsWith('/plataforma/') || pathname === '/' || pathname.startsWith('/_next/') || pathname.startsWith('/favicon') || pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/reset-password') || pathname.startsWith('/verify-email') || pathname.startsWith('/donate') || pathname.startsWith('/books') || pathname.startsWith('/privacy') || pathname.startsWith('/terms') || pathname.startsWith('/testimonials') || pathname.startsWith('/pastores') || pathname.startsWith('/public') || pathname.startsWith('/auth') || pathname.startsWith('/s/')) {
         return withNoStoreHeaders(NextResponse.next(), request);
+    }
+
+    // Proxy de la API de plataforma hacia el backend (H-PROJ-UI-03), salvo
+    // las rutas API locales del propio frontend.
+    if (pathname === '/api' || (pathname.startsWith('/api/') && !LOCAL_API_PREFIXES.some((prefix) => pathname.startsWith(prefix)))) {
+        return proxyApiRequest(request);
     }
 
     const firstSegment = pathname.split('/')[1];
