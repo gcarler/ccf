@@ -169,3 +169,64 @@ describe("ProjectTimeTrackingDrawer delete confirmation", () => {
     expect(within(diagnosis).getByText("Instalación")).toBeInTheDocument();
   });
 });
+
+describe("ProjectTimeTrackingDrawer — actualizaciones optimistas (H-PROJ-UI-04)", () => {
+  beforeEach(() => {
+    mocks.apiFetch.mockReset();
+    mocks.addToast.mockClear();
+  });
+
+  it("pinta el registro creado de inmediato sin refetch completo tras el POST", async () => {
+    const created = {
+      ...log,
+      id: "log-2",
+      hours: 2,
+      description: "Trabajo dedicado",
+      date: "2026-10-27T10:00:00Z",
+    };
+    mocks.apiFetch.mockImplementation((path: string, options?: { method?: string }) => {
+      if (options?.method === "POST") return Promise.resolve(created);
+      if (path.endsWith("/time-tracking-summary")) return Promise.resolve(summary);
+      return Promise.resolve([log]);
+    });
+    const countLogGets = () =>
+      mocks.apiFetch.mock.calls.filter(([path, opts]) =>
+        String(path).endsWith("/time-logs")
+        && !((opts as { method?: string } | undefined)?.method)
+      ).length;
+
+    render(<ProjectTimeTrackingDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Historial (1)" }));
+    await screen.findByText("Preparación de materiales");
+    const getCallsBefore = countLogGets();
+
+    fireEvent.click(screen.getByRole("button", { name: "Entrada Manual" }));
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Guardar Entrada de Tiempo" }).closest("form")!
+    );
+
+    // Optimismo: la fila aparece sin refetch posterior del listado.
+    await waitFor(() => expect(screen.getByText("Trabajo dedicado")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Historial (2)" })).toBeInTheDocument();
+    expect(countLogGets()).toBe(getCallsBefore);
+    expect(mocks.addToast).toHaveBeenCalledWith("Registro de tiempo creado con éxito", "success");
+  });
+
+  it("restaura el registro en la lista cuando el DELETE falla (rollback)", async () => {
+    mocks.apiFetch.mockImplementation((path: string, options?: { method?: string }) => {
+      if (path.endsWith("/time-tracking-summary")) return Promise.resolve(summary);
+      if (options?.method === "DELETE") return Promise.reject(new Error("Servicio no disponible"));
+      return Promise.resolve([log]);
+    });
+
+    render(<ProjectTimeTrackingDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Historial (1)" }));
+    await screen.findByText("Preparación de materiales");
+    fireEvent.click(await screen.findByRole("button", { name: "Eliminar registro de 1.50 horas: Preparación de materiales" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Eliminar" }));
+
+    await waitFor(() => expect(mocks.addToast).toHaveBeenCalledWith("Error al eliminar el registro", "error"));
+    expect(screen.getByText("Preparación de materiales")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Historial (1)" })).toBeInTheDocument();
+  });
+});

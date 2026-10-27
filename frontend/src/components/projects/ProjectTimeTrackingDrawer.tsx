@@ -147,17 +147,19 @@ export function ProjectTimeTrackingDrawer({
         date: new Date().toISOString(),
       };
 
-      await apiFetch<ProjectTimeLog>(`/projects/${projectId}/time-logs`, {
+      // H-PROJ-UI-04 (optimismo local): la respuesta del POST es el registro
+      // canónico; se pinta de inmediato sin refetch completo de logs/summary.
+      const created = await apiFetch<ProjectTimeLog>(`/projects/${projectId}/time-logs`, {
         method: "POST",
         token,
         body: JSON.stringify(payload),
       });
+      if (created?.id) setLogs(prev => [created, ...prev]);
 
       addToast(`Tiempo registrado: ${hoursDecimal} hrs`, "success");
       setTimerRunning(false);
       setTimerSeconds(0);
       setTimerDesc("");
-      fetchData();
       onTimeLogged?.();
     } catch {
       addToast("Error al guardar registro del cronómetro", "error");
@@ -185,16 +187,19 @@ export function ProjectTimeTrackingDrawer({
         date: manualDate ? new Date(`${manualDate}T12:00:00Z`).toISOString() : new Date().toISOString(),
       };
 
-      await apiFetch<ProjectTimeLog>(`/projects/${projectId}/time-logs`, {
+      // H-PROJ-UI-04 (optimismo local): append del registro devuelto sin
+      // refetch completo; la summary se re-sincroniza en el próximo open
+      // o con la recarga del proyecto (onTimeLogged).
+      const created = await apiFetch<ProjectTimeLog>(`/projects/${projectId}/time-logs`, {
         method: "POST",
         token,
         body: JSON.stringify(payload),
       });
+      if (created?.id) setLogs(prev => [created, ...prev]);
 
       addToast("Registro de tiempo creado con éxito", "success");
       setManualHours("1.0");
       setManualDesc("");
-      fetchData();
       onTimeLogged?.();
       setActiveTab("logs");
     } catch {
@@ -204,18 +209,20 @@ export function ProjectTimeTrackingDrawer({
     }
   };
 
-  // Eliminar registro
+  // Eliminar registro (H-PROJ-UI-04: optimismo local con rollback en fallo)
   const handleDeleteLog = async (logId: string) => {
+    const snapshot = logs;
+    setLogs(prev => prev.filter(l => l.id !== logId));
     try {
       await apiFetch(`/projects/${projectId}/time-logs/${logId}`, {
         method: "DELETE",
         token,
       });
       addToast("Registro de tiempo eliminado", "info");
-      await fetchData();
       onTimeLogged?.();
     } catch (error) {
       addToast("Error al eliminar el registro", "error");
+      setLogs(snapshot);
       throw error;
     }
   };

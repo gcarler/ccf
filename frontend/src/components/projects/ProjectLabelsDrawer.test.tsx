@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { toast } from "sonner";
 import { ProjectLabelsDrawer } from "./ProjectLabelsDrawer";
 import { apiFetch } from "@/lib/http";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
@@ -308,5 +309,74 @@ describe("ProjectLabelsDrawer — Gobernanza de Taxonomía PMI", () => {
     fireEvent.click(within(filter).getByRole("button", { name: "Todas" }));
     expect(screen.getByText("Arcaico")).toBeInTheDocument();
     expect(screen.getByText("Backend")).toBeInTheDocument();
+  });
+});
+
+describe("ProjectLabelsDrawer — actualizaciones optimistas (H-PROJ-UI-04)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  it("pinta el renombrado al instante, sin esperar la reconciliación del servidor", async () => {
+    let serverFetches = 0;
+    vi.mocked(apiFetch).mockImplementation((
+      _url: string,
+      opts?: { method?: string }
+    ) => {
+      if (opts?.method === "PATCH") {
+        return Promise.resolve([
+          { name: "Backend Core", task_count: 3 },
+          { name: "Frontend", task_count: 5 },
+        ]);
+      }
+      // GET inicial resuelve; la reconciliación posterior queda pendiente.
+      serverFetches += 1;
+      if (serverFetches === 1) {
+        return Promise.resolve([
+          { name: "Backend", task_count: 3 },
+          { name: "Frontend", task_count: 5 },
+        ]);
+      }
+      return new Promise(() => {});
+    });
+
+    renderDrawer(<ProjectLabelsDrawer projectId="p-1" isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() => expect(screen.getByText("Backend")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Renombrar etiqueta Backend" }));
+    fireEvent.change(screen.getByDisplayValue("Backend"), { target: { value: "Backend Core" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar nombre" }));
+
+    // Optimismo: visible sin que el GET de reconciliación haya resuelto.
+    await waitFor(() => {
+      expect(screen.getByText("Backend Core")).toBeInTheDocument();
+    });
+    expect(serverFetches).toBe(2);
+  });
+
+  it("restaura la etiqueta en el catálogo cuando el DELETE falla", async () => {
+    vi.mocked(apiFetch).mockImplementation((
+      _url: string,
+      opts?: { method?: string }
+    ) => {
+      if (opts?.method === "DELETE") return Promise.reject(new Error("Servicio no disponible"));
+      return Promise.resolve([
+        { name: "Backend", task_count: 3 },
+        { name: "Frontend", task_count: 5 },
+      ]);
+    });
+
+    renderDrawer(<ProjectLabelsDrawer projectId="p-1" isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() => expect(screen.getByText("Backend")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar etiqueta Backend" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sí, eliminar" }));
+
+    await waitFor(() => {
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Servicio no disponible");
+    });
+    // Rollback: sigue en el catálogo local.
+    expect(localStorage.getItem("projectLabelsCatalog:p-1") ?? "").toContain("Backend");
   });
 });

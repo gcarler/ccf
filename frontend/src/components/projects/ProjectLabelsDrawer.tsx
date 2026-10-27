@@ -326,6 +326,15 @@ export function ProjectLabelsDrawer({
 
     try {
       setRenaming(true);
+      // H-PROJ-UI-04 (optimismo local): el catálogo local cambia ANTES del
+      // PATCH para que la UI pinte el nuevo nombre sin esperar red. En fallo
+      // se revierte y la reconciliación de servidor es no bloqueante.
+      const currentLocal = getLocalCatalog();
+      const nextLocal = currentLocal.map((l) => (l === oldName ? trimmedNew : l));
+      if (!nextLocal.includes(trimmedNew)) nextLocal.push(trimmedNew);
+      persistLocalCatalog(nextLocal);
+      setEditingLabel(null);
+
       if (token) {
         await apiFetch<ProjectLabelItem[]>(`/projects/${projectId}/labels`, {
           method: "PATCH",
@@ -334,18 +343,14 @@ export function ProjectLabelsDrawer({
         });
       }
 
-      // Update local catalog
-      const currentLocal = getLocalCatalog();
-      const nextLocal = currentLocal.map((l) => (l === oldName ? trimmedNew : l));
-      if (!nextLocal.includes(trimmedNew)) nextLocal.push(trimmedNew);
-      persistLocalCatalog(nextLocal);
-
       toast.success(`Etiqueta renombrada a "${trimmedNew}"`);
-      setEditingLabel(null);
-      await fetchLabels();
       onUpdated?.();
       projectUpdateContext?.reloadProject?.();
+      void fetchLabels();
     } catch (err: unknown) {
+      const reverted = getLocalCatalog().map((l) => (l === trimmedNew ? oldName : l));
+      persistLocalCatalog(reverted);
+      setEditingLabel(oldName);
       const msg = err instanceof Error ? err.message : "Error al renombrar la etiqueta";
       toast.error(msg);
     } finally {
@@ -363,6 +368,13 @@ export function ProjectLabelsDrawer({
   const handleConfirmDelete = async (name: string) => {
     try {
       setDeleting(true);
+      // H-PROJ-UI-04 (optimismo local): la eliminación se pinta antes del
+      // DELETE; en fallo se restaura y la reconciliación es no bloqueante.
+      const currentLocal = getLocalCatalog();
+      const nextLocal = currentLocal.filter((l) => l !== name);
+      persistLocalCatalog(nextLocal);
+      setDeletingLabel(null);
+
       if (token) {
         await apiFetch<ProjectLabelItem[]>(
           `/projects/${projectId}/labels?name=${encodeURIComponent(name)}`,
@@ -373,17 +385,15 @@ export function ProjectLabelsDrawer({
         );
       }
 
-      // Remove from local catalog
-      const currentLocal = getLocalCatalog();
-      const nextLocal = currentLocal.filter((l) => l !== name);
-      persistLocalCatalog(nextLocal);
-
       toast.success(`Etiqueta "${name}" eliminada`);
-      setDeletingLabel(null);
-      await fetchLabels();
       onUpdated?.();
       projectUpdateContext?.reloadProject?.();
+      void fetchLabels();
     } catch (err: unknown) {
+      if (!getLocalCatalog().includes(name)) {
+        persistLocalCatalog([...getLocalCatalog(), name]);
+      }
+      setDeletingLabel(name);
       const msg = err instanceof Error ? err.message : "Error al eliminar la etiqueta";
       toast.error(msg);
     } finally {
