@@ -6,6 +6,12 @@ import clsx from 'clsx';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
+import ProjectPMIControlBar from '@/components/projects/ProjectPMIControlBar';
+import {
+  hubStateChanged,
+  readHubState,
+  writeHubParams,
+} from '@/components/projects/projectHubUrl';
 import { canDeleteProject } from '@/lib/projects/access';
 import {
   confirmProjectDeletion,
@@ -400,29 +406,55 @@ export default function ProjectDetailPage() {
   }>({ open: [], active: null });
   const hubOpen = hubState.open.length > 0;
 
+  // H-PROJ-UI-02: la URL es la fuente de verdad del hub (deep-link). Las
+  // mutaciones locales son optimistas y router.replace persiste el estado;
+  // el efecto inferior re-concilia con searchParams, de modo que Atrás/Adelante
+  // del navegador y un ?tool= compartido abren/cierran el hub correctamente.
+  const syncHubUrl = useCallback((hub: { open: string[]; active: string | null }) => {
+    if (!id) return;
+    const params = writeHubParams(new URLSearchParams(searchParams?.toString() ?? ''), hub);
+    router.replace(`/plataforma/projects/${id}?${params.toString()}`, { scroll: false });
+  }, [id, router, searchParams]);
+
   const openHubModule = useCallback((key: ProjectHubModuleKey) => {
-    setHubState(prev => ({
-      open: prev.open.includes(key) ? prev.open : [...prev.open, key],
+    const next = {
+      open: hubState.open.includes(key) ? hubState.open : [...hubState.open, key],
       active: key,
-    }));
-  }, []);
+    };
+    setHubState(next);
+    syncHubUrl(next);
+  }, [hubState, syncHubUrl]);
 
   const closeHubModule = useCallback((key: ProjectHubModuleKey) => {
-    setHubState(prev => {
-      const open = prev.open.filter(row => row !== key);
-      return {
-        open,
-        active:
-          prev.active === key
-            ? open[open.length - 1] ?? null
-            : prev.active,
-      };
-    });
-  }, []);
+    const open = hubState.open.filter(row => row !== key);
+    const next = {
+      open,
+      active: hubState.active === key ? open[open.length - 1] ?? null : hubState.active,
+    };
+    setHubState(next);
+    syncHubUrl(next);
+  }, [hubState, syncHubUrl]);
 
   const closeHub = useCallback(() => {
     setHubState({ open: [], active: null });
-  }, []);
+    syncHubUrl({ open: [], active: null });
+  }, [syncHubUrl]);
+
+  // Re-conciliación con la URL: un ?tool= en la query (deep-link, Atrás o
+  // refresh) abre los módulos; la ausencia de param cierra el hub.
+  const urlToolList = searchParams?.getAll?.('tool')?.join(',') ?? '';
+  const urlToolActive = searchParams?.get?.('toolActive') ?? '';
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    const next = readHubState(params);
+    setHubState(prev =>
+      hubStateChanged(prev, next)
+        ? { open: next.open as ProjectHubModuleKey[], active: next.active as ProjectHubModuleKey | null }
+        : prev
+    );
+    // Deps primitivas: solo reaccionamos cuando la query del hub cambia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlToolList, urlToolActive]);
 
   // ── Command Palette (S3/S4, rev_ui_13102026.md §5): comandos Ctrl+K que
   // reflejan la navegación del detalle: cambiar de vista, crear actividad
@@ -587,6 +619,15 @@ export default function ProjectDetailPage() {
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
     { key: 'delete', label: 'Eliminar proyecto', icon: Trash2, onSelect: handleDeleteProject, variant: 'destructive' as const, visible: canDeleteProjectFromApiPolicy },
   ].filter((action) => action.visible !== false);
+
+  // Conmutación única desde el selector de Herramientas (ProjectPMIControlBar):
+  // acción canónica del proyecto si existe (cubre Pizarra/Fases/Editar y los
+  // módulos del hub) o apertura directa del hub para keys sin acción registrada.
+  const handleToolSwitch = useCallback((key: string) => {
+    const action = projectActions.find((item) => item.key === key);
+    if (action) void action.onSelect();
+    else openHubModule(key as ProjectHubModuleKey);
+  }, [projectActions, openHubModule]);
 
   const moduleRenderers = {
     components: () => (
@@ -882,46 +923,17 @@ export default function ProjectDetailPage() {
           }
         />
 
-        <div
-          data-testid="project-detail-pmi-control-bar"
-          className="flex flex-wrap items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.45)] px-4 py-1.5 shrink-0"
-        >
-          <div className="flex flex-wrap items-center gap-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
-            <span className="font-bold text-[hsl(var(--foreground))]">Control PMI §4.3 &amp; §4.5</span>
-            <span>Etapa / Estado: {project?.status || 'active'}</span>
-            <span>Avance WBS (0/50/100): {wbsAveragePct}%</span>
-            <span>Paquetes WBS: {tasks.length} paquete(s)</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* Selector de herramientas con conmutación directa: se puede pasar
-                de Horas a Etiquetas/Riesgos/Drive sin cerrar la activa (no-modal). */}
-            <label className="sr-only" htmlFor="project-detail-tools-switcher">
-              Conmutar herramienta del proyecto
-            </label>
-            <select
-              id="project-detail-tools-switcher"
-              value=""
-              onChange={(event) => {
-                const key = event.currentTarget.value as ProjectHubModuleKey | '';
-                if (!key) return;
-                // Conmutación directa vía la acción canónica de la herramienta:
-                // cubre módulos del hub (openHubModule) y acciones propias
-                // (Pizarra, Fases, Editar proyecto) con una sola entrada.
-                const action = projectActions.find((item) => item.key === key);
-                if (action) void action.onSelect();
-                else openHubModule(key);
-              }}
-              className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors focus:outline-2 focus:outline-[hsl(var(--primary))]"
-            >
-              <option value="">Herramientas…</option>
-              {projectActions.map((action) => (
-                <option key={action.key} value={action.key}>
-                  {action.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* Barra de Control PMI + selector de Herramientas: extraída a
+            ProjectPMIControlBar (H-PROJ-UI-01) para tener suite de prueba del
+            wiring; el hub activa refleja la herramienta activa (H-PROJ-UI-05). */}
+        <ProjectPMIControlBar
+          statusLabel={project?.status || 'active'}
+          wbsAveragePct={wbsAveragePct}
+          wbsPackagesCount={tasks.length}
+          actions={projectActions}
+          activeKey={hubState.active}
+          onSelectAction={handleToolSwitch}
+        />
 
         {/* Apariencia: drawer de tema claro/oscuro para el detalle de Proyectos */}
         <AppearanceDrawer isOpen={showAppearance} onClose={() => setShowAppearance(false)} />
