@@ -178,7 +178,12 @@ Envía factura electrónica.
 
 ### Gastos
 
-Flujo de estados: `draft → submitted → approved → reimbursed` | `rejected`
+Flujo canónico: `draft → pastor_review → central_authorization → approved → disbursed`.
+Los endpoints `/approve` y `/reimburse` se conservan como alias de autorización
+central y desembolso. Los estados históricos `submitted` y `reimbursed` se
+mantienen para compatibilidad con registros existentes. Las solicitudes abiertas
+pueden rechazarse con motivo y auditoría; los estados `disbursed`, `reimbursed`
+y `rejected` no pueden volver a rechazarse.
 
 **Segregación de deberes:** El aprobador no puede ser el mismo usuario que creó el reporte.
 
