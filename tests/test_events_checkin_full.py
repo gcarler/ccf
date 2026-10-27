@@ -148,8 +148,9 @@ class TestCheckin:
         )
         assert resp.status_code == 404
 
-    def test_session_detail_excludes_absent_attendance(self, evan_full, db_session):
-        """Los registros marcados ausentes no deben aparecer como presentes."""
+    @pytest.mark.parametrize("attended,deleted", [(False, False), (True, True)], ids=["absent", "soft-deleted"])
+    def test_session_detail_excludes_absent_attendance(self, evan_full, db_session, attended, deleted):
+        """Absent and soft-deleted attendance must never count as present."""
         c, h, s = evan_full["c"], evan_full["h"], evan_full["s"]
         evt = _create_event(db_session, s)
         person = Persona(
@@ -165,8 +166,9 @@ class TestCheckin:
                 event_id=evt.id,
                 session_date=datetime(2026, 8, 15).date(),
                 persona_id=person.id,
-                attended=False,
-                status="absent",
+                attended=attended,
+                status="present" if attended else "absent",
+                deleted_at=datetime.now(timezone.utc) if deleted else None,
             )
         )
         db_session.commit()
@@ -179,3 +181,4 @@ class TestCheckin:
         data = resp.json()
         assert data["attendees"] == []
         assert data["total_attendance"] == 0
+        assert all(count == 0 for count in data["metrics"].values())

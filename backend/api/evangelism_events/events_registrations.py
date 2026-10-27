@@ -33,6 +33,7 @@ from backend.core.permissions import (
     require_evangelism_read,
 )
 from backend.core.rate_limit import academy_limiter
+from backend.exceptions.http import StructuredHTTPException
 from backend.services.event_registration_service import (
     RegistrationError,
     _issue_cancel_token,
@@ -325,7 +326,7 @@ def create_registration(
     try:
         role_code = resolve_participant_role(event, requested=payload.participant_role_code)
     except RegistrationError as exc:
-        raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
+        raise StructuredHTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
 
     reg = models.EventRegistration(
         event_id=event.id,
@@ -424,7 +425,7 @@ def update_registration(
         try:
             reg.participant_role_code = resolve_participant_role(event, requested=payload.participant_role_code)
         except RegistrationError as exc:
-            raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
+            raise StructuredHTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
 
     db.commit()
     db.refresh(reg)
@@ -646,7 +647,7 @@ def update_preregistration_config(
         try:
             event.participant_role_code = normalize_participant_role(payload.participant_role_code)
         except RegistrationError as exc:
-            raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
+            raise StructuredHTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
     db.commit()
     return {
         "id": str(event.id),

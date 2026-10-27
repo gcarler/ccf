@@ -504,7 +504,7 @@ class TestUnifiedCheckin:
         assert attendance.attended is True
 
     def test_checkin_duplicate(self, checkin_ctx, client, db_session):
-        """Caso 6: check-in duplicado → is_duplicate=True."""
+        """Repeated QR scans preserve the gatekeeper anti-fraud 409 contract."""
         evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
         db_session.commit()
         reg_data = _register(client, evt.id).json()
@@ -514,10 +514,17 @@ class TestUnifiedCheckin:
         assert qr is not None and qr.startswith("CCF-EVT-")
 
         r1 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
+        first_checkin = _reg_row(db_session, reg_id).check_in_at
         r2 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
         assert r1.json()["is_duplicate"] is False
-        assert r2.status_code == 200
-        assert r2.json()["is_duplicate"] is True
+        assert r2.status_code == 409
+        assert r2.json()["status"] == "duplicate_access"
+        assert r2.json()["first_checkin_at"]
+        assert r2.json()["checked_by_name"]
+        assert _reg_row(db_session, reg_id).check_in_at == first_checkin
+        assert db_session.query(models.EventAttendance).filter(
+            models.EventAttendance.event_id == evt.id,
+        ).count() == 1
 
     def test_checkin_pending_rejected(self, checkin_ctx, client, db_session):
         """Inscripción PENDING (email sin verificar) no puede hacer check-in."""
