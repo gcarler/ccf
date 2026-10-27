@@ -118,7 +118,10 @@ class TestEventWithDynamicForm:
 
         resp = _register(client, evt.id, form_data={})
         assert resp.status_code == 422, resp.text
-        assert resp.json()["detail"]["code"] == "REQUIRED_FIELD"
+        body = resp.json()
+        assert body["detail"]["code"] == "REQUIRED_FIELD"
+        assert body["code"] == body["detail"]["code"]
+        assert body["field_id"] == body["detail"]["field_id"] == "nombre_extra"
 
     def test_register_form_data_invalid_type_422(self, client, db_session, sede):
         form = _make_form(db_session, sede)
