@@ -94,3 +94,84 @@ def test_finance_has_an_explicit_owner_and_rejects_foreign_module_files():
     assert ownership_violations("feature/finance-quality", own) == []
     foreign = ["backend/api/projects.py", "backend/api/crm/personas.py"]
     assert ownership_violations("feature/finance-quality", foreign) == foreign
+
+
+def _git_owner_sync_repository(tmp_path, monkeypatch):
+    import subprocess
+
+    # Real hooks export repository-local Git env. Keep fixture commands and
+    # changed_files() inside their own repository even when run by pre-push.
+    local_vars = subprocess.check_output(["git", "rev-parse", "--local-env-vars"], text=True).splitlines()
+    for name in local_vars:
+        monkeypatch.delenv(name, raising=False)
+    root = tmp_path / "repo"
+    root.mkdir()
+    monkeypatch.chdir(root)
+
+    def git(*args):
+        return subprocess.check_output(["git", *args], text=True, stderr=subprocess.PIPE).strip()
+
+    git("init", "-q", "--initial-branch=main")
+    git("config", "user.name", "Ownership Test")
+    git("config", "user.email", "ownership@example.invalid")
+    (root / "backend/api").mkdir(parents=True)
+    (root / "backend/api/messaging.py").write_text("initial messaging\n")
+    (root / "backend/api/academy.py").write_text("initial academy\n")
+    git("add", ".")
+    git("commit", "-qm", "initial")
+    git("checkout", "-qb", "feature/messaging-proof")
+    (root / "backend/api/messaging.py").write_text("published messaging\n")
+    git("commit", "-qam", "messaging owner work")
+    published = git("rev-parse", "HEAD")
+    git("checkout", "-q", "main")
+    (root / "backend/api/academy.py").write_text("reviewed upstream academy\n")
+    git("commit", "-qam", "reviewed main work")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    git("checkout", "-q", "feature/messaging-proof")
+    git("merge", "-q", "--no-edit", "main")
+    return root, git, published
+
+
+def test_owner_sync_excludes_upstream_main_but_preserves_new_owner_work(tmp_path, monkeypatch):
+    from scripts.check_branch_contract import changed_files
+
+    root, git, published = _git_owner_sync_repository(tmp_path, monkeypatch)
+    (root / "backend/api/messaging.py").write_text("new messaging work after sync\n")
+    git("commit", "-qam", "new messaging fix")
+    paths = changed_files(published, "HEAD")
+    assert paths == ["backend/api/messaging.py"]
+    assert ownership_violations("feature/messaging-proof", paths) == []
+
+
+def test_owner_sync_still_rejects_new_foreign_edits_and_files(tmp_path, monkeypatch):
+    from scripts.check_branch_contract import changed_files
+
+    root, git, published = _git_owner_sync_repository(tmp_path, monkeypatch)
+    (root / "backend/api/academy.py").write_text("new unowned edit\n")
+    (root / "backend/api/academy_new.py").write_text("new unowned file\n")
+    git("add", ".")
+    git("commit", "-qm", "unowned changes after sync")
+    paths = changed_files(published, "HEAD")
+    assert paths == ["backend/api/academy.py", "backend/api/academy_new.py"]
+    assert ownership_violations("feature/messaging-proof", paths) == paths
+
+
+def test_owner_sync_cannot_hide_foreign_deletion_or_cross_module_rename(tmp_path, monkeypatch):
+    from scripts.check_branch_contract import changed_files
+
+    root, git, published = _git_owner_sync_repository(tmp_path, monkeypatch)
+    git("mv", "backend/api/academy.py", "backend/api/messaging_moved.py")
+    git("commit", "-qm", "foreign rename after sync")
+    paths = changed_files(published, "HEAD")
+    assert paths == ["backend/api/academy.py", "backend/api/messaging_moved.py"]
+    assert ownership_violations("feature/messaging-proof", paths) == ["backend/api/academy.py"]
+
+
+def test_missing_canonical_main_keeps_original_owner_validation(tmp_path, monkeypatch):
+    from scripts.check_branch_contract import changed_files
+
+    root, git, published = _git_owner_sync_repository(tmp_path, monkeypatch)
+    git("update-ref", "-d", "refs/remotes/origin/main")
+    paths = changed_files(published, "HEAD")
+    assert paths == ["backend/api/academy.py"]
+    assert ownership_violations("feature/messaging-proof", paths) == paths
