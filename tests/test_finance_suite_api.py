@@ -492,7 +492,7 @@ def test_submit_expense_report(client, db_session):
     # Submit (same user = employee)
     resp2 = client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
     assert resp2.status_code == 200
-    assert resp2.json()["status"] == "submitted"
+    assert resp2.json()["status"] == "pastor_review"
 
 
 def test_submit_expense_report_wrong_owner(client, db_session):
@@ -517,7 +517,7 @@ def test_submit_expense_report_wrong_owner(client, db_session):
     assert resp2.status_code == 403
 
 
-def test_reject_expense_report_only_submitted(client, db_session):
+def test_reject_expense_report_blocks_closed_report(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client)
 
@@ -531,7 +531,11 @@ def test_reject_expense_report_only_submitted(client, db_session):
     )
     report_id = resp.json()["id"]
 
-    # Cannot reject draft
+    # Closed disbursements cannot be rejected; drafts remain reviewable under
+    # the canonical multi-level workflow.
+    report = db_session.get(models.ExpenseReport, _uuid.UUID(report_id))
+    report.status = "disbursed"
+    db_session.commit()
     resp2 = client.post(f"/api/finance-suite/expense-reports/{report_id}/reject", headers=headers)
     assert resp2.status_code == 400
 

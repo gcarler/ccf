@@ -23,6 +23,7 @@ from backend.core.permissions import (
 )
 from backend.core.rate_limit import rate_limiter
 from backend.core.tenant import get_user_sede_id
+from backend.exceptions.http import StructuredHTTPException
 from backend.models_shared import _utcnow
 from backend.schemas import finance_suite as schemas
 
@@ -830,7 +831,7 @@ def send_electronic_invoice(
         allow_unscoped=_finance_platform_admin(db, current_user),
     )
 
-    raise HTTPException(
+    raise StructuredHTTPException(
         status_code=422,
         detail={
             "code": "ELECTRONIC_INVOICING_NOT_CONFIGURED",

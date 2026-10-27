@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 import uuid as _uuid
 from typing import Any, Optional
@@ -20,6 +21,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, relationship
 
 from backend.models_shared import Base, _utcnow
+
+logger = logging.getLogger(__name__)
 
 
 class Project(Base):
@@ -325,7 +328,7 @@ class ProjectTask(Base):
                     total += float(ch.actual_hours or 0.0)
                 return round(total, 2)
         except Exception:
-            pass
+            logger.debug("Best-effort actual_hours failed; retaining fallback")
         own_logs = [
             tl for tl in (self.__dict__.get("time_logs") or [])
             if getattr(tl, "deleted_at", None) is None
@@ -371,7 +374,7 @@ class ProjectTask(Base):
                     total += float(ch.actual_cost or 0.0)
                 return round(total, 2)
         except Exception:
-            pass
+            logger.debug("Best-effort actual_cost failed; retaining fallback")
         own_exps = [
             e for e in (self.__dict__.get("expenses") or [])
             if getattr(e, "deleted_at", None) is None and getattr(e, "status", None) in ("approved", "paid")
@@ -444,7 +447,7 @@ class TaskSupply(Base):
                     .first()
                 )
         except Exception:
-            pass
+            logger.debug("Best-effort _resolve_linked_expense failed; retaining fallback")
         return None
 
     @property
@@ -648,7 +651,7 @@ def decode_kpi_meta(raw_description: str | None) -> tuple[str | None, dict[str, 
         if isinstance(parsed, dict):
             return (clean_desc if clean_desc else None), parsed
     except Exception:
-        pass
+        logger.debug("Best-effort decode_kpi_meta failed; retaining fallback")
     return raw_description, {}
 
 
@@ -749,7 +752,7 @@ def decode_risk_meta(raw_text: str | None) -> tuple[str | None, dict[str, Any]]:
         if isinstance(parsed, dict):
             return (clean_text if clean_text else None), parsed
     except Exception:
-        pass
+        logger.debug("Best-effort decode_risk_meta failed; retaining fallback")
     return raw_text, {}
 
 
