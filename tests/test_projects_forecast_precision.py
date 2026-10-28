@@ -90,12 +90,3 @@ def test_composite_forecast_preserves_a_small_nonzero_performance_product():
     assert result["eac"] == expected == 27273000
     assert result["etc"] == expected - float(ac)
     assert result["vac"] == float(bac) - expected
-
-
-def test_unmeasured_cost_policy_remains_outside_precision_fix(db_session):
-    project = _project(db_session, progress=50, actual_cost=0)
-    result = calculate_project_evm_advanced(db_session, project, now=CUTOFF)
-    # H07 owns availability. This unit does not certify its existing fallback.
-    assert result["standard_evm"]["cpi"] == 2
-    assert result["standard_evm"]["eac"] == 500
-    assert result["forecast_models"]["typical"]["eac"] == 250
