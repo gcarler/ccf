@@ -81,7 +81,7 @@ def _connect():
         try:
             conn.close()
         except Exception:  # pragma: no cover
-            pass
+            logger.debug("Best-effort _connect failed; retaining fallback")
         return None
     return conn
 

@@ -639,10 +639,18 @@ class TestWorkspaceMoreEndpoints:
         resp = client.get("/api/workspace/flags/compliance/history", headers=headers)
         assert resp.status_code == 200
 
-    def test_compliance_drift(self, client_auth):
+    def test_compliance_drift(self, client_auth, monkeypatch, tmp_path):
+        from backend.api.workspace_shared import _storage
+
+        monkeypatch.setattr(_storage, "SNAPSHOT_HISTORY_FILE", tmp_path / "history.ndjson")
         client, headers, _ = client_auth
+        for _ in range(2):
+            snapshot = client.get("/api/workspace/flags/compliance/snapshot", headers=headers)
+            assert snapshot.status_code == 200
         resp = client.get("/api/workspace/flags/compliance/drift", headers=headers)
         assert resp.status_code == 200
+        assert resp.json()["from"]["snapshot_id"]
+        assert resp.json()["to"]["snapshot_id"]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

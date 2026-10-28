@@ -26,6 +26,6 @@ def test_canonical_baseline_is_the_only_active_head(tmp_path):
 
     heads = _run_alembic("heads", database_url=db_url)
     assert heads.returncode == 0, heads.stderr
-    assert "20261018_0002_pmo_portfolio_governance" in heads.stdout
+    assert "20261024_0001_add_coq_amount_to_project_dod_acceptances" in heads.stdout
 
     assert heads.stdout.count("(head)") == 1

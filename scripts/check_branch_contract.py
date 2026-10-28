@@ -44,6 +44,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         ".coveragerc",
         "requirements.txt",
         "alembic/env.py",
+        "tests/test_canonical_baseline.py",
         "frontend/vitest.config.ts",
         "backend/models_kernel.py",
         "backend/models_auth.py",

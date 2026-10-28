@@ -170,9 +170,12 @@ const nextConfig = {
     async rewrites() {
         const target = apiProxyTarget || 'http://backend:8000';
         return {
-            fallback: [
+            // Resolve backend APIs before the public [...slug] page. Local
+            // static API handlers are checked first; dynamic Next handlers
+            // keep their own namespaces rather than being sent to FastAPI.
+            afterFiles: [
                 {
-                    source: '/api/:path*',
+                    source: '/api/:path((?!mock/|crm/resources/automation-edges/).*)',
                     destination: `${target}/api/:path*`,
                 },
             ],
