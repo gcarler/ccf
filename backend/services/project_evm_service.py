@@ -596,9 +596,11 @@ def calculate_project_evm(
 
     # 5. Índice de Desempeño del Costo (CPI = EV / AC)
     if ac > 0:
-        cpi = round(ev / ac, 2)
+        raw_cpi = ev / ac
+        cpi = round(raw_cpi, 2)
     else:
         cpi = 1.0 if ev == 0.0 else 2.0  # Sin gasto aún
+        raw_cpi = cpi
 
     # 6. Índice de Desempeño del Cronograma (SPI = EV / PV)
     if pv > 0:
@@ -614,10 +616,12 @@ def calculate_project_evm(
     cr = round(cpi * spi, 2)
 
     # 9. Estimación y Variación a la Conclusión (EAC y VAC)
-    if cpi > 0:
-        eac = round(bac / cpi, 2)
+    # Display precision must not erase a small, measured cost index.
+    # A forecast cannot be less than the cost already incurred.
+    if raw_cpi > 0:
+        eac = round(max(ac, bac / raw_cpi), 2)
     else:
-        eac = bac
+        eac = max(ac, bac)
     vac = round(bac - eac, 2)
 
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
@@ -1641,7 +1645,7 @@ def calculate_eac_forecasts(
     vac_atypical_pct = round((vac_atypical / max(bac, 1.0)) * 100.0, 1)
 
     # 3. EAC Combinado (CPI x SPI): El costo futuro se afecta por costos y retraso en el cronograma
-    perf_factor = round(cpi * spi, 4)
+    perf_factor = cpi * spi
     if perf_factor > 0:
         eac_composite = round(ac + (work_remaining / perf_factor), 2)
     elif cpi > 0:
@@ -1919,8 +1923,12 @@ def calculate_project_evm_advanced(
     earned_schedule = calculate_earned_schedule(db, project, ev=ev, bac=bac, now=now)
     spi_t = earned_schedule["schedule_performance_index_time"]
 
-    # 3. Modelos de Pronóstico EAC
-    forecasts = calculate_eac_forecasts(bac=bac, ev=ev, ac=ac, cpi=cpi, spi=spi)
+    # 3. Modelos de Pronóstico EAC. Keep display-rounded DTO indices out of
+    # divisions; preserve the existing unmeasured policy until H07 is resolved.
+    forecast_cpi = ev / ac if ac > 0 else cpi
+    pv = std_evm["pv"]
+    forecast_spi = ev / pv if pv > 0 else spi
+    forecasts = calculate_eac_forecasts(bac=bac, ev=ev, ac=ac, cpi=forecast_cpi, spi=forecast_spi)
     typical_eac = forecasts["typical"]["eac"]
 
     # 4. TCPI
