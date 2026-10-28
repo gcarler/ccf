@@ -670,8 +670,28 @@ def calculate_project_evm(
     #    saldo del BAC se ejecuta a CPI=1 implícito. La fórmula heredada EAC=BAC ocultaba el
     #    sobrecosto ya incurrido. Sin gasto (AC=0) ni avance (EV=0) se mantiene el
     #    eco del BAC (placeholder señalado por eac_available=False).
+    # Calidad de datos primero (audit rev 1, hallazgo 2/C3): spi_available debe
+    # contradecir nunca a su propio data_quality. Con sin_cronograma el fallback
+    # pv = ev solo crea un PV placeholder, no un cronograma medible.
+    has_valid_schedule = bool(target_dt and target_dt > start_dt)
+    tasks_with_due = sum(1 for t in tasks if _as_utc(t.due_date) is not None)
+
+    data_quality: List[str] = []
+    if bac <= 0.0:
+        data_quality.append("sin_presupuesto")
+    if ac <= 0.0:
+        data_quality.append("sin_gastos")
+    if total_tasks == 0 and not has_valid_schedule:
+        data_quality.append("sin_cronograma")
+    if total_tasks > 0 and tasks_with_due == 0:
+        data_quality.append("tareas_sin_fecha")
+    data_quality = [code for code in DATA_QUALITY_CODES if code in data_quality]
+    primary_data_quality_issue: Optional[str] = data_quality[0] if data_quality else None
+
     cpi_available = bool(bac > 0.0 and ac > 0.0)
-    spi_available = bool(bac > 0.0 and pv > 0.0)
+    # SPI medible requiere presupuesto, PV computable Y cronograma válido.
+    # (audit rev 1, hallazgo 2: sin_cronograma => spi_available False)
+    spi_available = bool(bac > 0.0 and pv > 0.0 and "sin_cronograma" not in data_quality)
 
     if ac > 0.0 and ev == 0.0:
         eac = round(max(0.0, ac) + max(0.0, bac - ev), 2)
@@ -688,27 +708,13 @@ def calculate_project_evm(
     #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
     #       1.0/2.0 de AC=0 es inventado, no medible. Con AC>0 y EV=0 el CPI=0 es
     #       real y medible.
-    #     - SPI requiere valor planificado positivo (PV>0). Con PV=0 el placeholder
-    #       1.0/2.0 no mide cronograma.
+    #     - SPI requiere valor planificado positivo (PV>0) Y cronograma válido:
+    #       con sin_cronograma el placeholder pv = ev no mide cronograma.
     #     - EAC es estimación solo con CPI real (o con la fórmula C2); sin CPI, el
     #       eco del BAC no es un pronóstico.
-    #     Motivos prioritarios: sin_presupuesto (BAC<=0) domina sobre los demás.
-    has_valid_schedule = bool(target_dt and target_dt > start_dt)
-    tasks_with_due = sum(1 for t in tasks if _as_utc(t.due_date) is not None)
-
+    #     Motivos prioritarios (calculados antes, sección 9): sin_presupuesto
+    #     (BAC<=0) domina sobre los demás.
     eac_available = bool(bac > 0.0 and cpi_available)
-
-    data_quality: List[str] = []
-    if bac <= 0.0:
-        data_quality.append("sin_presupuesto")
-    if ac <= 0.0:
-        data_quality.append("sin_gastos")
-    if total_tasks == 0 and not has_valid_schedule:
-        data_quality.append("sin_cronograma")
-    if total_tasks > 0 and tasks_with_due == 0:
-        data_quality.append("tareas_sin_fecha")
-    data_quality = [code for code in DATA_QUALITY_CODES if code in data_quality]
-    primary_data_quality_issue: Optional[str] = data_quality[0] if data_quality else None
 
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
 
@@ -4547,7 +4553,7 @@ def evaluate_control_account_variance_masking(
     }
 
 
-_ES_UNSET_VERIFICADO_ADELANTADO = object()
+_ES_UNSET = object()
 
 
 def evaluate_earned_schedule_performance(
@@ -4555,11 +4561,11 @@ def evaluate_earned_schedule_performance(
     actual_time_periods: float = 0.0,
     cumulative_pv_curve: list[float] | None = None,
     *,
-    planned_value_curve: Any = _ES_UNSET_VERIFICADO_ADELANTADO,
+    planned_value_curve: Any = _ES_UNSET,
     planned_duration_periods: Optional[float] = None,
 ) -> dict[str, Any]:
     """Evalúa el Cronograma Ganado (Earned Schedule - ES), SPI(t) y SV(t) proyectando EV sobre la curva acumulada de PV según PMI Practice Standard for EVM y PMBOK §7.4."""
-    if planned_value_curve is not _ES_UNSET_VERIFICADO_ADELANTADO:
+    if planned_value_curve is not _ES_UNSET:
         curve: List[float] = []
         if isinstance(planned_value_curve, list):
             for val in planned_value_curve:
