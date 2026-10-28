@@ -104,6 +104,23 @@ def _safe_float(val: Any, default: float = 0.0) -> float:
     return default
 
 
+# Códigos canónicos de calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
+# Orden de prioridad para el motivo principal cuando concurren varios.
+DATA_QUALITY_CODES = (
+    "sin_presupuesto",
+    "sin_gastos",
+    "sin_cronograma",
+    "tareas_sin_fecha",
+)
+
+DATA_QUALITY_LABELS = {
+    "sin_presupuesto": "Sin presupuesto definido (BAC = 0)",
+    "sin_gastos": "Sin gastos registrados (AC = 0)",
+    "sin_cronograma": "Sin cronograma (sin fechas de inicio/fin válidas)",
+    "tareas_sin_fecha": "Tareas sin fecha límite (PV no computable)",
+}
+
+
 def _is_valid_id(val: Any) -> bool:
     return isinstance(val, (str, uuid.UUID)) and bool(str(val).strip())
 
@@ -624,6 +641,36 @@ def calculate_project_evm(
         eac = max(ac, bac)
     vac = round(bac - eac, 2)
 
+    # 9b. Disponibilidad de indicadores y calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
+    #     Valores heredados (cpi/spi/eac legacy) se mantienen intactos para no romper el
+    #     contrato; los flags indican al consumidor cuáles NO son medibles y no deben
+    #     presentarse como reales:
+    #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
+    #       1.0/2.0 de AC=0 es inventado, no medible.
+    #     - SPI requiere valor planificado positivo (PV>0). Con PV=0 el placeholder
+    #       1.0/2.0 no mide cronograma.
+    #     - EAC = BAC/CPI solo es estimación con CPI real; sin CPI, EAC=BAC es un
+    #       eco del presupuesto, no un pronóstico.
+    #     Motivos prioritarios: sin_presupuesto (BAC<=0) domina sobre los demás.
+    has_valid_schedule = bool(target_dt and target_dt > start_dt)
+    tasks_with_due = sum(1 for t in tasks if _as_utc(t.due_date) is not None)
+
+    cpi_available = bool(bac > 0.0 and ac > 0.0)
+    spi_available = bool(bac > 0.0 and pv > 0.0)
+    eac_available = bool(bac > 0.0 and cpi_available)
+
+    data_quality: List[str] = []
+    if bac <= 0.0:
+        data_quality.append("sin_presupuesto")
+    if ac <= 0.0:
+        data_quality.append("sin_gastos")
+    if total_tasks == 0 and not has_valid_schedule:
+        data_quality.append("sin_cronograma")
+    if total_tasks > 0 and tasks_with_due == 0:
+        data_quality.append("tareas_sin_fecha")
+    data_quality = [code for code in DATA_QUALITY_CODES if code in data_quality]
+    primary_data_quality_issue: Optional[str] = data_quality[0] if data_quality else None
+
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
 
     # 10. Diagnóstico, Semáforo, Regla del 15% de Estabilidad CPI y Early Warning Sentinel
@@ -710,6 +757,11 @@ def calculate_project_evm(
         "financial_percentage": financial_pct,
         "cpi": cpi,
         "spi": spi,
+        "cpi_available": cpi_available,
+        "spi_available": spi_available,
+        "eac_available": eac_available,
+        "data_quality": data_quality,
+        "primary_data_quality_issue": primary_data_quality_issue,
         "cv": cv,
         "sv": sv,
         "cr": cr,
