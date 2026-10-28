@@ -16,6 +16,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from scripts.query_tenant_provenance import in_provenance_domain, query_has_tenant_provenance  # noqa: E402
+
 API_DIR = ROOT / "backend" / "api"
 MODELS_DIR = ROOT / "backend"
 SCHEMAS_DIR = ROOT / "backend" / "schemas"
@@ -120,6 +124,13 @@ def test_sede_id_in_all_queries():
             if stripped.startswith("#") or stripped.startswith("    #"):
                 continue
 
+            # Migrated proof domains are AST-authoritative. The legacy word
+            # heuristic below remains limited to unmigrated endpoints only.
+            if in_provenance_domain(content, i):
+                if not query_has_tenant_provenance(content, i):
+                    violations.append(f"  {fpath}:{i}: {stripped[:80]}")
+                continue
+
             # Ignorar si ya tiene filtro de aislamiento en la misma línea
             if "sede_id" in stripped or "proyecto_id" in stripped or "grupo_id" in stripped:
                 continue
@@ -141,6 +152,8 @@ def test_sede_id_in_all_queries():
             if any(m in context for m in isolation_markers) or "sede" in context.lower():
                 continue
 
+            if query_has_tenant_provenance(content, i):
+                continue
             violations.append(f"  {fpath}:{i}: {stripped[:80]}")
 
     if violations:
