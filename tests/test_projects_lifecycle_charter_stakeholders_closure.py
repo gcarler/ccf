@@ -144,6 +144,16 @@ def test_pmo_portfolio_matrix_classifies_quadrants_and_isolates_sede(client, db_
         "Portfolio Cost Acceleration": {"bac": 2000, "ev": 800, "ac": 1000, "pv": 700, "cpi": 0.8, "spi": 1.14, "progress_percentage": 40},
         "Portfolio Underutilized": {"bac": 3000, "ev": 1100, "ac": 1000, "pv": 1300, "cpi": 1.1, "spi": 0.85, "progress_percentage": 36},
         "Portfolio Critical": {"bac": 4000, "ev": 800, "ac": 1000, "pv": 1100, "cpi": 0.8, "spi": 0.73, "progress_percentage": 20},
+        # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: sin datos medibles -> cuadrante
+        # 'sin_datos' con motivo (decisión de producto: se lista, nunca se oculta).
+        "Portfolio No Data": {
+            "bac": 0, "ev": 0, "ac": 0, "pv": 0, "cpi": 1.0, "spi": 1.0,
+            "progress_percentage": 10,
+            "cpi_available": False,
+            "spi_available": False,
+            "data_quality": ["sin_presupuesto", "sin_gastos"],
+            "primary_data_quality_issue": "sin_presupuesto",
+        },
     }
     local_projects = []
     for title in expected_metrics:
@@ -177,13 +187,22 @@ def test_pmo_portfolio_matrix_classifies_quadrants_and_isolates_sede(client, db_
     response = client.get("/api/projects/pmo-portfolio-matrix", headers=headers_a)
     assert response.status_code == 200, response.text
     payload = response.json()
-    assert payload["portfolio_totals"]["total_projects"] == 4
+    assert payload["portfolio_totals"]["total_projects"] == 5
     assert payload["portfolio_totals"]["total_bac"] == 10000
+    assert payload["portfolio_totals"]["portfolio_cpi_available"] is True
+    assert payload["portfolio_totals"]["portfolio_spi_available"] is True
+    # El agregado del portafolio solo usa proyectos con datos medibles:
+    # EV=3600, AC=3900 -> CPI=0.92; EV=3600, PV=4000 -> SPI=0.9.
+    assert payload["portfolio_totals"]["portfolio_cpi"] == 0.92
+    assert payload["portfolio_totals"]["portfolio_spi"] == 0.9
     assert payload["quadrants_distribution"] == {
         "q1_optimal": 1,
         "q2_cost_acceleration": 1,
         "q3_underutilized_capacity": 1,
         "q4_critical_emergency": 1,
+        # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: proyectos con CPI/SPI no
+        # medibles se reportan como sin_datos con el motivo, nunca ocultos.
+        "sin_datos": 1,
     }
     matrix_by_title = {project["title"]: project for project in payload["projects_matrix"]}
     assert "Sede B confidential project" not in matrix_by_title
@@ -191,6 +210,16 @@ def test_pmo_portfolio_matrix_classifies_quadrants_and_isolates_sede(client, db_
     assert matrix_by_title["Portfolio Optimal"]["pmo_type"] == "supportive"
     assert matrix_by_title["Portfolio Optimal"]["charter_status"] == "authorized"
     assert matrix_by_title["Portfolio Critical"]["quadrant"] == "q4_critical_emergency"
+    assert matrix_by_title["Portfolio No Data"]["quadrant"] == "sin_datos"
+    assert matrix_by_title["Portfolio No Data"]["cpi_available"] is False
+    assert matrix_by_title["Portfolio No Data"]["spi_available"] is False
+    assert matrix_by_title["Portfolio No Data"]["primary_data_quality_issue"] == "sin_presupuesto"
+    assert any(
+        label.startswith("Sin presupuesto definido")
+        for label in matrix_by_title["Portfolio No Data"]["data_quality_labels"]
+    )
+    sin_datos_titles = [p["title"] for p in payload["sin_datos_projects"]]
+    assert sin_datos_titles == ["Portfolio No Data"]
 
     response_b = client.get("/api/projects/pmo-portfolio-matrix", headers=headers_b)
     assert response_b.status_code == 200, response_b.text
@@ -14075,3 +14104,95 @@ def test_asc606_wip_revenue_field_coercion_and_empty_collection():
     assert weird["earned_revenue_to_date"] == 500000.0  # pct 0.5 sin CO
     assert weird["billing_imbalance_pct"] == 10.0  # 100,000/1,000,000
     assert weird["compliance_status"] == "WARNING_MATERIAL_WIP_BILLING_IMBALANCE"
+
+
+def test_pmo_portfolio_matrix_sin_datos_conteo_y_agregado_no_disponible(client, db_session, monkeypatch):
+    """TKT-PROJECTS-EVM-NA-PHASE1-20261028-01 (auditoría agy): proyecto BAC=0 y sin
+    cronograma NO cae en cuadrante óptimo por valores inventados; va a 'sin_datos'
+    con motivo 'sin presupuesto definido', y el agregado del portafolio queda n/d
+    si ningún proyecto tiene CPI/SPI medibles."""
+    _, _, sede_a = seed_admin(db_session, email="pmo-sin-datos-a@example.com")
+    headers_a = auth_headers(client, email="pmo-sin-datos-a@example.com")
+
+    for title in ("Sin Datos BAC0", "Sin Datos Cronograma"):
+        db_session.add(models.Project(id=uuid.uuid4(), title=title, sede_id=sede_a.id, status="active"))
+    db_session.commit()
+
+    monkeypatch.setattr(
+        project_evm_service,
+        "calculate_project_evm",
+        lambda _db, project: (
+            {"bac": 0, "ev": 0, "ac": 0, "pv": 0, "cpi": 1.0, "spi": 1.0, "progress_percentage": 5,
+             "cpi_available": False, "spi_available": False,
+             "data_quality": ["sin_presupuesto", "sin_gastos"],
+             "primary_data_quality_issue": "sin_presupuesto"}
+            if "BAC0" in project.title
+            else {"bac": 1000, "ev": 0, "ac": 0, "pv": 1000, "cpi": 1.0, "spi": 1.0, "progress_percentage": 0,
+                  "cpi_available": False, "spi_available": False,
+                  "data_quality": ["sin_gastos"], "primary_data_quality_issue": "sin_gastos"}
+        ),
+    )
+
+    response = client.get("/api/projects/pmo-portfolio-matrix", headers=headers_a)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["portfolio_totals"]["total_projects"] == 2
+    assert payload["portfolio_totals"]["portfolio_cpi_available"] is False
+    assert payload["portfolio_totals"]["portfolio_spi_available"] is False
+    assert payload["portfolio_totals"]["portfolio_cpi"] == 1.0  # legacy placeholder intacto
+    assert payload["quadrants_distribution"] == {
+        "q1_optimal": 0,
+        "q2_cost_acceleration": 0,
+        "q3_underutilized_capacity": 0,
+        "q4_critical_emergency": 0,
+        "sin_datos": 2,
+    }
+    assert len(payload["sin_datos_projects"]) == 2
+    motivo_principal = payload["sin_datos_projects"][0]["primary_data_quality_issue"]
+    assert motivo_principal in ("sin_presupuesto", "sin_gastos")
+
+
+def test_early_warning_sentinel_no_data_con_cpi_o_spi_no_disponible():
+    """Sentinel: con indicadores no medibles NO inventa nivel de riesgo; reporta no_data."""
+    result = project_evm_service.calculate_early_warning_sentinel(
+        cpi=1.0, spi=1.0, cpi_available=False, spi_available=True,
+    )
+    assert result["level"] == "no_data"
+    assert result["status"] == "no_data"
+    assert result["severity_color"] == "neutral"
+    assert result["requires_ccb"] is False
+    assert result["requires_pmo_audit"] is False
+    assert result["min_index"] is None
+
+    # Con datos disponibles conserva la clasificación canónica
+    normal = project_evm_service.calculate_early_warning_sentinel(cpi=1.0, spi=1.0)
+    assert normal["level"] == "normal"
+
+
+def test_evm_resumen_sin_datos_semaforo_y_sentinel_compatibles():
+    """Proyecto BAC=0: el semáforo del EVM reporta SIN_DATOS (no OPTIMO por placeholders)."""
+    import datetime
+    from unittest.mock import MagicMock
+
+    db = MagicMock()
+    calculate = project_evm_service.calculate_project_evm
+    proj = MagicMock()
+    proj.id = uuid.uuid4()
+    proj.budget_allocated = 0.0
+    proj.budget_spent = 0.0
+    proj.manual_progress = 30.0
+    proj.progress_mode = "manual"
+    now = datetime.datetime.now(datetime.timezone.utc)
+    proj.start_date = now - datetime.timedelta(days=10)
+    proj.target_date = now + datetime.timedelta(days=30)
+    proj.created_at = proj.start_date
+
+    try:
+        evm = calculate(MagicMock(), proj)
+    except Exception as exc:  # pragma: no cover — el path debe ser estable
+        raise AssertionError(f"calculate_project_evm con BAC=0 levantó {exc!r}") from exc
+
+    assert evm["health_status"] == "SIN_DATOS"
+    assert evm["health_color"] == "neutral"
+    assert evm["early_warning_sentinel"]["level"] == "no_data"
+    assert evm["primary_data_quality_issue"] == "sin_presupuesto"

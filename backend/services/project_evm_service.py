@@ -342,10 +342,46 @@ def calculate_cpi_stability_rule(progress_pct: float, cpi: float) -> Dict[str, A
     }
 
 
-def calculate_early_warning_sentinel(cpi: float, spi: float) -> Dict[str, Any]:
-    """Clasifica el nivel de Alerta Temprana (Sentinel) en los 4 umbrales de PMI Vol. 5 §4 según min(CPI, SPI)."""
+def calculate_early_warning_sentinel(
+    cpi: float,
+    spi: float,
+    cpi_available: bool = True,
+    spi_available: bool = True,
+) -> Dict[str, Any]:
+    """Clasifica el nivel de Alerta Temprana (Sentinel) en los 4 umbrales de PMI Vol. 5 §4 según min(CPI, SPI).
+
+    TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: si el CPI o el SPI no son medibles
+    (placeholders por AC=0/PV=0/BAC=0), el Sentinel no inventa un nivel de
+    riesgo: reporta ``no_data`` con la acción de completar datos, conservando
+    el resto de la respuesta para no romper el contrato.
+    """
     curr_cpi = round(float(cpi), 2)
     curr_spi = round(float(spi), 2)
+
+    if not (cpi_available and spi_available):
+        nivel_label = "Sin datos suficientes"
+        protocol_action = (
+            "Completar datos de EVM (presupuesto, gastos o cronograma) "
+            "antes de clasificar desempeño; no hay alerta de riesgo evaluable."
+        )
+        return {
+            "level": "no_data",
+            "status": "no_data",
+            "label": nivel_label,
+            "min_index": None,
+            "cpi": curr_cpi,
+            "spi": curr_spi,
+            "cpi_available": bool(cpi_available),
+            "spi_available": bool(spi_available),
+            "limiting_metric": None,
+            "threshold_range": "requiere CPI y SPI medibles (AC>0 y PV>0 con BAC>0)",
+            "protocol_action": protocol_action,
+            "action": protocol_action,
+            "severity_color": "neutral",
+            "requires_ccb": False,
+            "requires_pmo_audit": False,
+        }
+
     min_index = round(min(curr_cpi, curr_spi), 2)
     limiting_metric = "CPI" if curr_cpi <= curr_spi else "SPI"
 
@@ -687,10 +723,30 @@ def calculate_project_evm(
 
     # 10. Diagnóstico, Semáforo, Regla del 15% de Estabilidad CPI y Early Warning Sentinel
     cpi_stability_rule = calculate_cpi_stability_rule(progress_pct=progress_pct, cpi=cpi)
-    early_warning_sentinel = calculate_early_warning_sentinel(cpi=cpi, spi=spi)
+    early_warning_sentinel = calculate_early_warning_sentinel(
+        cpi=cpi,
+        spi=spi,
+        cpi_available=cpi_available,
+        spi_available=spi_available,
+    )
 
     recommendations: List[str] = []
-    if cpi >= 1.0 and spi >= 1.0:
+    if not (cpi_available and spi_available):
+        # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: sin datos medibles el semáforo
+        # no inventa un cuadrante óptimo/crítico; reporta la causa de forma
+        # accionable (los motivos ya salen en data_quality / motivo principal).
+        health_status = "SIN_DATOS"
+        health_color = "neutral"
+        motivo_labels = [
+            DATA_QUALITY_LABELS.get(code, code) for code in data_quality
+        ] or ["Datos de EVM incompletos (presupuesto, gastos o cronograma)."]
+        recommendations.append(
+            "El desempeño no es evaluable con los datos actuales del proyecto "
+            "(" + "; ".join(motivo_labels) + "). Complete los datos pendientes "
+            "para activar el control de valor ganado."
+        )
+        recommendations.append(early_warning_sentinel["protocol_action"])
+    elif cpi >= 1.0 and spi >= 1.0:
         health_status = "OPTIMO"
         health_color = "success"
         recommendations.append("El proyecto avanza según el cronograma y dentro del presupuesto aprobado.")
