@@ -9,8 +9,21 @@
  * `*_available === false` como si fueran medibles.
  */
 
-/** Etiquetas canónicas por código de calidad de datos (contrato con backend). */
+/**
+ * Etiquetas canónicas por código de calidad de datos.
+ *
+ * Códigos vigentes: espejo exacto de `DATA_QUALITY_LABELS` en
+ * `backend/services/project_evm_service.py` (audit rev 1, hallazgo 1 — los
+ * códigos ^no_transactions^/^baseline_not_active^/... nunca fueron emitidos por
+ * el backend real). Los códigos antiguos se conservan al final solo por si algún
+ * otro módulo todavía los emite.
+ */
 const DATA_QUALITY_LABELS: Record<string, string> = {
+  sin_presupuesto: 'Sin presupuesto definido (BAC = 0)',
+  sin_gastos: 'Sin gastos registrados (AC = 0)',
+  sin_cronograma: 'Sin cronograma (sin fechas de inicio/fin válidas)',
+  tareas_sin_fecha: 'Tareas sin fecha límite (PV no computable)',
+  // Códigos anteriores — conservados solo por compatibilidad defensiva.
   no_transactions: 'Sin transacciones de costo registradas',
   baseline_not_active: 'Sin línea base autorizada',
   baseline_progress_not_available: 'Progreso de línea base no reportado',
