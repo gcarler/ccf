@@ -19,8 +19,8 @@ import pytest
 
 from backend import models, schemas
 from backend.crud import projects as crud
+from backend.services import project_indicator_service
 from tests.conftest import seed_admin
-
 
 # ──────────────────────────────────────────────────────────────────────
 # G1 — validate_crema_indicator
@@ -241,6 +241,177 @@ def test_record_actualiza_current_value_del_indicador(db_session):
     assert rec.spi == 0.75
     db_session.refresh(ind)
     assert float(ind.current_value) == 75.0
+
+
+# ──────────────────────────────────────────────────────────────────────
+# W1 — cronología: reportes extemporáneos no pisan current_value
+# ──────────────────────────────────────────────────────────────────────
+
+
+def _create_manual_indicator(db_session, project, persona, target=100.0):
+    return crud.create_project_indicator(
+        db_session,
+        project.id,
+        schemas.ProjectIndicatorCreate(
+            code="PRO-M",
+            name="Indicador manual de cronología W1",
+            description="Mediciones manuales sin fuente de ejecución",
+            level="PRODUCTO_PRINCIPAL",
+            calculation_type="PORCENTAJE_PROPORCION",
+            unit_of_measure="%",
+            target_value=target,
+        ),
+        created_by=persona.id,
+        sede_id=project.sede_id,
+    )
+
+
+def test_record_extemporaneo_no_pisa_current_value_cronologico(db_session):
+    """Hallazgo 11/D1: registrar 80 en octubre y luego 20 en septiembre debe
+    dejar current_value=80 (el más reciente por reported_at), no 20."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-atraso@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    now = datetime.datetime.now(timezone.utc)
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=80.0, reported_at=now
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 80.0
+
+    # Backfill extemporáneo: medición de septiembre con reported_at anterior
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=20.0,
+            reported_at=now - datetime.timedelta(days=20),
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 80.0  # W1: la cronología manda
+
+    listed = {i.id: i for i in crud.get_project_indicators(db_session, project.id, sede_id=sede.id)}
+    assert float(listed[ind.id].current_value) == 80.0
+    assert float(listed[ind.id].last_spi) == 0.8  # SPI del registro más reciente
+
+
+def test_record_cronologia_reporte_mas_reciente_gana_despues_del_backfill(db_session):
+    """Si el backfill llega primero y luego se registra el período actual,
+    el current_value refleja el reporte más reciente por reported_at."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-backfill@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    now = datetime.datetime.now(timezone.utc)
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=20.0,
+            reported_at=now - datetime.timedelta(days=20),
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=80.0, reported_at=now
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 80.0  # el más reciente por reported_at
+
+
+def test_record_empate_reported_at_resuelve_por_created_at(db_session):
+    """W1: con reported_at empatado (períodos distintos), el desempate es
+    created_at DESC (el más tardío registrado gana), determinismo estable."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-tie@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    reported_at = datetime.datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=40.0, reported_at=reported_at
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    second = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=55.0, reported_at=reported_at
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 55.0  # W1: created_at DESC como desempate
+    listed = {i.id: i for i in crud.get_project_indicators(db_session, project.id, sede_id=sede.id)}
+    assert float(listed[ind.id].last_spi) == 0.55  # SPI del registro crítico más reciente
+    assert second.spi == 0.55
+
+
+def test_record_soft_delete_del_mas_reciente_devuelve_al_anterior(db_session):
+    """W1 + Axioma 2: si el registro cronológicamente más reciente se soft-deleta,
+    el current_value vuelve a reflejar el anterior vivo (sin huesos vacíos)."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-softdel@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    now = datetime.datetime.now(timezone.utc)
+    primero = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=30.0,
+            reported_at=now - datetime.timedelta(days=10),
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    ultimo = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=70.0, reported_at=now
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 70.0
+
+    ultimo.deleted_at = datetime.datetime.now(timezone.utc)
+    ultimo.updated_at = datetime.datetime.now(timezone.utc)
+    db_session.commit()
+    project_indicator_service.apply_chronological_current_value(db_session, ind)
+    db_session.commit()
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 30.0  # el último vivo restante es 2026-09
+    vivos = crud.get_project_indicator_records(db_session, ind.id, sede_id=sede.id)
+    assert {r.id for r in vivos} == {primero.id}
 
 
 def test_record_normaliza_reported_at_naive_a_utc(db_session):

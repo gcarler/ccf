@@ -18,6 +18,7 @@ from backend import models, schemas
 from backend.crud.crm import resolve_persona_id_for_user
 from backend.models_shared import _utcnow
 from backend.schemas.projects import TASK_TITLE_MAX_LENGTH
+from backend.services import project_indicator_service
 
 logger = logging.getLogger(__name__)
 
@@ -5381,8 +5382,13 @@ def _prepare_indicator_response(
             ind.__dict__["is_orphaned"] = bool(eval_res.get("orphaned"))
         else:
             if records:
-                sorted_recs = sorted(records, key=lambda x: x.reported_at or x.created_at)
-                ind.last_spi = sorted_recs[-1].spi
+                # W1: current_value y last_spi reflejan el registro vivo más
+                # reciente por cronología (reported_at DESC, created_at DESC);
+                # los reportes extemporáneos (backfill) no pisan el estado
+                # actual ni el SPI mostrado.
+                latest_rec = project_indicator_service.sort_records_chronologically_desc(records)[0]
+                ind.current_value = float(latest_rec.actual_value or 0.0)
+                ind.last_spi = latest_rec.spi
             elif ind.target_value and float(ind.target_value) > 0 and float(ind.current_value or 0.0) > 0:
                 ind.last_spi = round(float(ind.current_value) / float(ind.target_value), 4)
             else:
@@ -5667,7 +5673,12 @@ def create_project_indicator_record(
     sede_id: Optional[UUID | str] = None,
     project_id: Optional[UUID | str] = None,
 ) -> models.ProjectIndicatorRecord:
-    """Registra avance periódico calculando SPI y actualizando el valor actual del indicador."""
+    """Registra avance periódico calculando SPI y refrescando el valor actual (W1).
+
+    El `current_value` del indicador se resuelve por cronología
+    (`reported_at DESC, created_at DESC`) sobre la historia viva: un reporte
+    extemporáneo (backfill con fecha anterior) no pisa el estado actual.
+    """
     indicator = get_project_indicator(db, indicator_id, project_id=project_id, sede_id=sede_id)
     if not indicator:
         raise ValueError("Indicador no encontrado o no pertenece a la sede (Axioma 3)")
@@ -5699,13 +5710,16 @@ def create_project_indicator_record(
         updated_at=datetime.now(timezone.utc),
     )
 
-    # Actualizar current_value del indicador con el último valor actual reportado
-    indicator.current_value = actual
-    indicator.updated_at = datetime.now(timezone.utc)
-
+    # W1: `current_value` se resuelve con cronología (reported_at DESC,
+    # created_at DESC) sobre la historia viva incluyendo el registro nuevo.
+    # Un reporte extemporáneo (backfill con fecha anterior) NO pisa el valor
+    # actual del indicador: el más reciente por `reported_at` manda.
     db.add(record)
+    project_indicator_service.apply_chronological_current_value(db, indicator)
+
     db.commit()
     db.refresh(record)
+    db.refresh(indicator)
     return _prepare_record_response(record)
 
 
