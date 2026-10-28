@@ -155,9 +155,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask, onOpenTool }: Pr
             const data = await apiFetch<ProjectBudgetSummary>(`/projects/${project.id}/budget-summary`, { token });
             if (data) setBudgetSummary(data);
         } catch {
-            // fallback silencioso
+            addToast('No se pudo cargar el presupuesto. Reintenta desde el control presupuestario.', 'error');
         }
-    }, [project.id, token]);
+    }, [project.id, token, addToast]);
 
     const loadRisksSummary = useCallback(async () => {
         if (!project.id || !token) return;
@@ -165,9 +165,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask, onOpenTool }: Pr
             const data = await apiFetch<ProjectRiskSummary>(`/projects/${project.id}/risks-summary`, { token });
             if (data) setRisksSummary(data);
         } catch {
-            // fallback silencioso
+            addToast('No se pudo cargar la matriz de riesgos. Reintenta desde la matriz RAID.', 'error');
         }
-    }, [project.id, token]);
+    }, [project.id, token, addToast]);
 
     const loadWorkloadSummary = useCallback(async () => {
         if (!project.id || !token) return;
@@ -175,9 +175,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask, onOpenTool }: Pr
             const data = await apiFetch<ProjectWorkloadSummary>(`/projects/${project.id}/workload`, { token });
             if (data) setWorkloadSummary(data);
         } catch {
-            // fallback silencioso
+            addToast('No se pudo cargar la carga de trabajo. Reintenta desde el panel de capacidad.', 'error');
         }
-    }, [project.id, token]);
+    }, [project.id, token, addToast]);
 
     const loadTimeTrackingSummary = useCallback(async () => {
         if (!project.id || !token) return;
@@ -185,9 +185,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask, onOpenTool }: Pr
             const data = await apiFetch<ProjectTimeTrackingSummary>(`/projects/${project.id}/time-tracking-summary`, { token });
             if (data) setTimeTrackingSummary(data);
         } catch {
-            // fallback silencioso
+            addToast('No se pudo cargar el registro de tiempo. Reintenta desde hojas de horas.', 'error');
         }
-    }, [project.id, token]);
+    }, [project.id, token, addToast]);
 
     useEffect(() => {
         loadKpis();
