@@ -23,7 +23,9 @@ fi
 MODE="${CCF_PRE_PUSH_MODE:-fast}"
 DEPLOY_AFTER_VALIDATION="${CCF_PRE_PUSH_DEPLOY:-0}"
 RUN_FRONTEND_E2E="${CCF_PRE_PUSH_E2E:-0}"
-QUALITY_TIMEOUT_SECONDS="${CCF_PRE_PUSH_CHECK_TIMEOUT:-300}"
+# 900s: el build de producción (frontend_build) mide 236–540s según la carga del
+# host; con 300s el gate fallaba por timeout aunque el build fuera correcto.
+QUALITY_TIMEOUT_SECONDS="${CCF_PRE_PUSH_CHECK_TIMEOUT:-900}"
 HEAD_REF="${CCF_PRE_PUSH_HEAD:-HEAD}"
 
 FAIL=0
