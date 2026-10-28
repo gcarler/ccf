@@ -17,6 +17,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
+from sqlalchemy.sql.elements import ColumnElement
 
 from backend import models
 from backend.api.academy_cache import (
@@ -63,6 +64,68 @@ def _course_scope(db: Session, user: models.User):
         query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
     return query
 
+
+
+def _academy_sede_filter(db: Session, user: models.User, column: ColumnElement) -> ColumnElement:
+    """Scope a tenant-owned row, preserving ministerial rows with NULL sede."""
+    if getattr(user, "id", None) is None:
+        raise HTTPException(status_code=401, detail="Authenticated actor required")
+    sede_id = get_user_sede_id(db, user.id)
+    return or_(column == sede_id, column.is_(None)) if sede_id else column.is_(None)
+
+
+
+def _require_academy_mutation_sede(db: Session, user: models.User) -> None:
+    """Mutations require a canonical actor UUID and a concrete tenant."""
+    try:
+        actor_id = UUID(str(getattr(user, "id", None)))
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(status_code=401, detail="Authenticated actor required") from None
+    if get_user_sede_id(db, actor_id) is None:
+        raise HTTPException(status_code=409, detail="El actor requiere una sede para modificar datos académicos")
+
+def _get_scoped_academy_offering(db: Session, user: models.User, offering_id: UUID):
+    offering = db.query(models.AcademyPeriodOffering).filter(
+        models.AcademyPeriodOffering.id == offering_id,
+        models.AcademyPeriodOffering.deleted_at.is_(None),
+        _academy_sede_filter(db, user, models.AcademyPeriodOffering.sede_id),
+    ).first()
+    if not offering:
+        raise HTTPException(status_code=404, detail="Comisión académica no encontrada")
+    return offering
+
+
+def _get_scoped_academy_plan(db: Session, user: models.User, plan_id: UUID):
+    plan = db.query(models.AcademyStudyPlan).filter(
+        models.AcademyStudyPlan.id == plan_id,
+        models.AcademyStudyPlan.deleted_at.is_(None),
+        _academy_sede_filter(db, user, models.AcademyStudyPlan.sede_id),
+    ).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan de estudio no encontrado")
+    return plan
+
+
+def _get_scoped_academy_subject(db: Session, user: models.User, subject_id: UUID):
+    subject = db.query(models.AcademyStudyPlanSubject).join(models.AcademyStudyPlan).filter(
+        models.AcademyStudyPlanSubject.id == subject_id,
+        models.AcademyStudyPlanSubject.deleted_at.is_(None),
+        models.AcademyStudyPlan.deleted_at.is_(None),
+        _academy_sede_filter(db, user, models.AcademyStudyPlan.sede_id),
+    ).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    return subject
+
+
+def _get_scoped_academy_student(db: Session, user: models.User, student_id: UUID):
+    student = db.query(models.Persona).filter(
+        models.Persona.id == student_id,
+        _academy_sede_filter(db, user, models.Persona.sede_id),
+    ).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Estudiante no encontrado")
+    return student
 
 def _get_scoped_course(db: Session, user: models.User, course_id: UUID) -> models.Course:
     course = _course_scope(db, user).filter(models.Course.id == course_id).first()
@@ -2564,6 +2627,7 @@ def get_study_plan_admin(
         )
         .filter(
             models.AcademyStudyPlan.id == plan_id,
+            _academy_sede_filter(db, current_user, models.AcademyStudyPlan.sede_id),
             models.AcademyStudyPlan.deleted_at.is_(None),
         )
         .first()
@@ -2583,12 +2647,8 @@ def add_subject_to_study_plan_admin(
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
-    plan = db.query(models.AcademyStudyPlan).filter(
-        models.AcademyStudyPlan.id == plan_id,
-        models.AcademyStudyPlan.deleted_at.is_(None),
-    ).first()
-    if not plan:
-        raise HTTPException(status_code=404, detail="Plan de estudio no encontrado")
+    _require_academy_mutation_sede(db, current_user)
+    plan = _get_scoped_academy_plan(db, current_user, plan_id)
 
     data = payload.model_dump()
     data["code"] = data["code"].strip().upper()
@@ -2614,19 +2674,15 @@ def update_subject_admin(
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
-    subject = db.query(models.AcademyStudyPlanSubject).filter(
-        models.AcademyStudyPlanSubject.id == subject_id,
-        models.AcademyStudyPlanSubject.deleted_at.is_(None),
-    ).first()
-    if not subject:
-        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    _require_academy_mutation_sede(db, current_user)
+    subject = _get_scoped_academy_subject(db, current_user, subject_id)
 
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(subject, key, value)
     subject.updated_at = _utcnow()
 
     # Recalculate plan total credits
-    plan = db.query(models.AcademyStudyPlan).filter(models.AcademyStudyPlan.id == subject.study_plan_id).first()
+    plan = _get_scoped_academy_plan(db, current_user, subject.study_plan_id)
     if plan:
         active_subjects = db.query(models.AcademyStudyPlanSubject).filter(
             models.AcademyStudyPlanSubject.study_plan_id == plan.id,
@@ -2645,15 +2701,12 @@ def delete_subject_admin(
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
-    subject = db.query(models.AcademyStudyPlanSubject).filter(
-        models.AcademyStudyPlanSubject.id == subject_id,
-        models.AcademyStudyPlanSubject.deleted_at.is_(None),
-    ).first()
-    if not subject:
-        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    _require_academy_mutation_sede(db, current_user)
+    subject = _get_scoped_academy_subject(db, current_user, subject_id)
+
     subject.deleted_at = _utcnow()
 
-    plan = db.query(models.AcademyStudyPlan).filter(models.AcademyStudyPlan.id == subject.study_plan_id).first()
+    plan = _get_scoped_academy_plan(db, current_user, subject.study_plan_id)
     if plan:
         active_subjects = db.query(models.AcademyStudyPlanSubject).filter(
             models.AcademyStudyPlanSubject.study_plan_id == plan.id,
@@ -2967,8 +3020,10 @@ def get_offering_students_admin(
     limit: int = 50,
     db: Session = Depends(get_db),
 ):
-    enrollments = db.query(models.AcademyStudentEnrollment).filter(
+    _get_scoped_academy_offering(db, current_user, offering_id)
+    enrollments = db.query(models.AcademyStudentEnrollment).join(models.Persona, models.AcademyStudentEnrollment.persona_id == models.Persona.id).filter(
         models.AcademyStudentEnrollment.offering_id == offering_id,
+            _academy_sede_filter(db, current_user, models.Persona.sede_id),
         models.AcademyStudentEnrollment.deleted_at.is_(None)
     ).offset(skip).limit(limit).all()
     return enrollments
@@ -3028,6 +3083,7 @@ def get_my_offerings_docente(
         joinedload(models.AcademyPeriodOffering.grading_scheme),
     ).filter(
         models.AcademyPeriodOffering.docente_persona_id == current_user.id,
+        _academy_sede_filter(db, current_user, models.AcademyPeriodOffering.sede_id),
         models.AcademyPeriodOffering.deleted_at.is_(None)
     ).order_by(models.AcademyPeriodOffering.created_at.desc()).offset(skip).limit(limit).all()
     
@@ -3058,6 +3114,7 @@ def get_offering_grades_docente(
         joinedload(models.AcademyPeriodOffering.grades),
     ).filter(
         models.AcademyPeriodOffering.id == offering_id,
+        _academy_sede_filter(db, current_user, models.AcademyPeriodOffering.sede_id),
         models.AcademyPeriodOffering.deleted_at.is_(None)
     ).first()
     
@@ -3067,8 +3124,9 @@ def get_offering_grades_docente(
     if offering.docente_persona_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not assigned to this offering")
         
-    enrollments = db.query(models.AcademyStudentEnrollment).options(joinedload(models.AcademyStudentEnrollment.persona)).filter(
+    enrollments = db.query(models.AcademyStudentEnrollment).join(models.Persona, models.AcademyStudentEnrollment.persona_id == models.Persona.id).options(joinedload(models.AcademyStudentEnrollment.persona)).filter(
         models.AcademyStudentEnrollment.offering_id == offering_id,
+            _academy_sede_filter(db, current_user, models.Persona.sede_id),
         models.AcademyStudentEnrollment.deleted_at.is_(None)
     ).all()
     
@@ -3496,11 +3554,13 @@ def get_knowledge_graph(
     current_user: AcademyReader,
     db: Session = Depends(get_db),
 ):
+    _get_scoped_academy_offering(db, current_user, offering_id)
     nodes = (
         db.query(models.AcademyKnowledgeNode)
         .filter(
             models.AcademyKnowledgeNode.offering_id == offering_id,
             models.AcademyKnowledgeNode.deleted_at.is_(None),
+            _academy_sede_filter(db, current_user, models.AcademyKnowledgeNode.sede_id),
         )
         .order_by(models.AcademyKnowledgeNode.created_at.asc())
         .all()
@@ -3514,6 +3574,7 @@ def get_knowledge_graph(
                 models.AcademyKnowledgeEdge.source_node_id.in_(node_ids),
                 models.AcademyKnowledgeEdge.target_node_id.in_(node_ids),
                 models.AcademyKnowledgeEdge.deleted_at.is_(None),
+            _academy_sede_filter(db, current_user, models.AcademyKnowledgeEdge.sede_id),
             )
             .all()
         )
@@ -3601,6 +3662,7 @@ def get_student_knowledge_progress(
     current_user: AcademyReader,
     db: Session = Depends(get_db),
 ):
+    _get_scoped_academy_offering(db, current_user, offering_id)
     nodes = (
         db.query(models.AcademyKnowledgeNode.id)
         .filter(
@@ -3731,6 +3793,7 @@ def get_student_portfolio(
 ):
     query = db.query(models.AcademyPortfolioEntry).filter(
         models.AcademyPortfolioEntry.student_id == student_id,
+        _academy_sede_filter(db, current_user, models.AcademyPortfolioEntry.sede_id),
         models.AcademyPortfolioEntry.deleted_at.is_(None),
     )
     if student_id != current_user.id and not _can_edit_academy(db, current_user):
@@ -3852,6 +3915,7 @@ def get_offering_wellness_signals(
     current_user: AcademyReader,
     db: Session = Depends(get_db),
 ):
+    _get_scoped_academy_offering(db, current_user, offering_id)
     if not _can_edit_academy(db, current_user):
         raise HTTPException(status_code=403, detail="Solo docentes o administradores pueden consultar señales de bienestar")
 
@@ -3861,6 +3925,7 @@ def get_offering_wellness_signals(
         .filter(
             models.AcademyWellnessSignal.offering_id == offering_id,
             models.AcademyWellnessSignal.deleted_at.is_(None),
+            _academy_sede_filter(db, current_user, models.AcademyWellnessSignal.sede_id),
         )
         .order_by(models.AcademyWellnessSignal.detected_at.desc())
         .all()
@@ -4507,6 +4572,7 @@ def list_study_groups_by_offering(
     current_user: AcademyReader,
     db: Session = Depends(get_db),
 ):
+    _get_scoped_academy_offering(db, current_user, offering_id)
     groups = (
         db.query(models.AcademyStudyGroup)
         .options(
@@ -4516,6 +4582,7 @@ def list_study_groups_by_offering(
         .filter(
             models.AcademyStudyGroup.offering_id == offering_id,
             models.AcademyStudyGroup.deleted_at.is_(None),
+            _academy_sede_filter(db, current_user, models.AcademyStudyGroup.sede_id),
             models.AcademyStudyGroup.is_active.is_(True),
         )
         .order_by(models.AcademyStudyGroup.created_at.desc())
@@ -4680,8 +4747,14 @@ def get_calendar_events(
 ):
     """Lista eventos del calendario académico con filtros opcionales."""
     query = db.query(models.AcademyCalendarEvent).filter(
-        models.AcademyCalendarEvent.deleted_at.is_(None)
+        models.AcademyCalendarEvent.deleted_at.is_(None),
+        _academy_sede_filter(db, current_user, models.AcademyCalendarEvent.sede_id)
     )
+
+    if student_id:
+        _get_scoped_academy_student(db, current_user, student_id)
+    if offering_id:
+        _get_scoped_academy_offering(db, current_user, offering_id)
 
     if offering_id:
         query = query.filter(models.AcademyCalendarEvent.offering_id == offering_id)
@@ -4698,9 +4771,10 @@ def get_calendar_events(
     if student_id:
         enrolled_offering_ids = [
             e.offering_id
-            for e in db.query(models.AcademyStudentEnrollment.offering_id)
+            for e in db.query(models.AcademyStudentEnrollment.offering_id).join(models.Persona, models.AcademyStudentEnrollment.persona_id == models.Persona.id)
             .filter(
                 models.AcademyStudentEnrollment.persona_id == student_id,
+            _academy_sede_filter(db, current_user, models.Persona.sede_id),
                 models.AcademyStudentEnrollment.deleted_at.is_(None),
             )
             .all()
@@ -4733,13 +4807,19 @@ def get_calendar_workload_prediction(
         ref_date = ref_date.replace(tzinfo=timezone.utc)
 
     offering_filter_ids = []
+    if student_id:
+        _get_scoped_academy_student(db, current_user, student_id)
+    if offering_id:
+        _get_scoped_academy_offering(db, current_user, offering_id)
+
     if offering_id:
         offering_filter_ids = [offering_id]
     elif student_id:
         enrolled = (
-            db.query(models.AcademyStudentEnrollment.offering_id)
+            db.query(models.AcademyStudentEnrollment.offering_id).join(models.Persona, models.AcademyStudentEnrollment.persona_id == models.Persona.id)
             .filter(
                 models.AcademyStudentEnrollment.persona_id == student_id,
+            _academy_sede_filter(db, current_user, models.Persona.sede_id),
                 models.AcademyStudentEnrollment.deleted_at.is_(None),
             )
             .all()
@@ -4747,7 +4827,8 @@ def get_calendar_workload_prediction(
         offering_filter_ids = [e.offering_id for e in enrolled]
 
     event_query = db.query(models.AcademyCalendarEvent).filter(
-        models.AcademyCalendarEvent.deleted_at.is_(None)
+        models.AcademyCalendarEvent.deleted_at.is_(None),
+        _academy_sede_filter(db, current_user, models.AcademyCalendarEvent.sede_id)
     )
 
     if offering_filter_ids:
@@ -5045,6 +5126,7 @@ def get_available_mentors(
         .options(joinedload(models.AcademyMentorProfile.mentor))
         .filter(
             models.AcademyMentorProfile.is_active.is_(True),
+            _academy_sede_filter(db, current_user, models.AcademyMentorProfile.sede_id),
             models.AcademyMentorProfile.deleted_at.is_(None),
         )
         .all()
@@ -5474,6 +5556,7 @@ def get_cohort_health(
     db: Session = Depends(get_db),
 ):
     """Devuelve el diagnóstico de salud académica de una comisión o cohorte."""
+    _get_scoped_academy_offering(db, current_user, offering_id)
     offering = (
         db.query(models.AcademyPeriodOffering)
         .options(
@@ -5497,9 +5580,10 @@ def get_cohort_health(
 
     # Matriculados
     enrolled_count = (
-        db.query(models.AcademyStudentEnrollment)
+        db.query(models.AcademyStudentEnrollment).join(models.Persona, models.AcademyStudentEnrollment.persona_id == models.Persona.id)
         .filter(
             models.AcademyStudentEnrollment.offering_id == offering_id,
+            _academy_sede_filter(db, current_user, models.Persona.sede_id),
             models.AcademyStudentEnrollment.deleted_at.is_(None),
         )
         .count()
@@ -5507,9 +5591,10 @@ def get_cohort_health(
 
     # Calificación promedio en esta comisión
     grades = (
-        db.query(models.AcademyStudentPeriodGrade.grade_value)
+        db.query(models.AcademyStudentPeriodGrade.grade_value).join(models.Persona, models.AcademyStudentPeriodGrade.persona_id == models.Persona.id)
         .filter(
             models.AcademyStudentPeriodGrade.offering_id == offering_id,
+            _academy_sede_filter(db, current_user, models.Persona.sede_id),
             models.AcademyStudentPeriodGrade.grade_value.isnot(None),
         )
         .all()
@@ -5532,7 +5617,13 @@ def get_cohort_health(
             func.count(models.AcademyStudentNodeProgress.student_id).label("eval_count"),
         )
         .join(models.AcademyStudentNodeProgress, models.AcademyStudentNodeProgress.node_id == models.AcademyKnowledgeNode.id)
-        .filter(models.AcademyKnowledgeNode.deleted_at.is_(None))
+        .filter(
+            models.AcademyKnowledgeNode.deleted_at.is_(None),
+            models.AcademyKnowledgeNode.offering_id == offering_id,
+            models.AcademyStudentNodeProgress.deleted_at.is_(None),
+            _academy_sede_filter(db, current_user, models.AcademyKnowledgeNode.sede_id),
+            _academy_sede_filter(db, current_user, models.AcademyStudentNodeProgress.sede_id),
+        )
         .group_by(models.AcademyKnowledgeNode.id, models.AcademyKnowledgeNode.title, models.AcademyKnowledgeNode.node_type)
         .order_by(func.avg(models.AcademyStudentNodeProgress.mastery_score).asc())
         .limit(5)
@@ -5557,6 +5648,7 @@ def get_cohort_health(
             models.AcademyWellnessSignal.offering_id == offering_id,
             models.AcademyWellnessSignal.is_resolved.is_(False),
             models.AcademyWellnessSignal.deleted_at.is_(None),
+            _academy_sede_filter(db, current_user, models.AcademyWellnessSignal.sede_id),
         )
         .order_by(models.AcademyWellnessSignal.detected_at.desc())
         .all()
