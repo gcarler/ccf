@@ -198,8 +198,14 @@ def test_frontend_build_receives_live_process_environment_and_matching_ignored_f
     env_file = runtime / "frontend/.env.local"
     env_file.write_text("NEXT_PUBLIC_API_URL=/api\n")
     monkeypatch.setenv("API_PROXY_TARGET", "http://unrelated-build-test.invalid")
-    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(20)"], env={"PATH": os.environ["PATH"], "API_PROXY_TARGET": "http://127.0.0.1:8000"})
+    child = subprocess.Popen(
+        [sys.executable, "-c", "import time; print('READY', flush=True); time.sleep(20)"],
+        env={"PATH": os.environ["PATH"], "API_PROXY_TARGET": "http://127.0.0.1:8000"},
+        stdout=subprocess.PIPE,
+        text=True,
+    )
     try:
+        assert child.stdout.readline().strip() == "READY"
         env, hashes = frontend.prepare_environment(source, runtime, child.pid)
         assert env["API_PROXY_TARGET"] == "http://127.0.0.1:8000"
         assert env["KEEP_OLD_BUILD"] == "1"
