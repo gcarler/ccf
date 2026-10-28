@@ -255,7 +255,11 @@ def test_evm_tareas_con_due_date_vencidas_pv_realizado_spi_disponible():
 
 
 def test_evm_sobrecosto_con_avance_cero_cpi_medible_bac_positivo():
-    """Gasto con avance 0 (auditoría): CPI=0 es medible (con AC>0 y BAC>0), no inventado."""
+    """Gasto con avance 0 (auditoría): CPI=0 es medible (con AC>0 y BAC>0), no inventado.
+
+    Del hallazgo C2, la corrección del valor inventado previo (EAC=BAC ocultaba el
+    sobrecosto ya incurrido): EAC = AC + (BAC - EV) = 25k + 100k = 125k y VAC = -25k.
+    """
     db = _db_for_evm()
     proj = _mock_project(budget_allocated=100000.0, budget_spent=25000.0, manual_progress=0.0)
     evm = calculate_project_evm(db, proj)
@@ -264,6 +268,9 @@ def test_evm_sobrecosto_con_avance_cero_cpi_medible_bac_positivo():
     assert evm["ev"] == 0.0
     assert evm["cpi"] == 0.0
     assert evm["cpi_available"] is True
+    assert evm["eac"] == 125000.0
+    assert evm["vac"] == -25000.0
+    assert evm["eac_available"] is True
     assert "sin_gastos" not in evm["data_quality"]
 
 
