@@ -25,15 +25,6 @@ from backend.services.messaging_outcomes import CommunicationOutcome
 logger = logging.getLogger(__name__)
 
 
-def _make_nop_session(db: Session):
-    """Wrapper no-propagador: notify() del hub opera con commits propios,
-    pero dentro de notify_task_assigned la transacción es atómica del caller.
-    Pasamos la misma sesión: el hub usará add/commit; el commit aquí es
-    coherente porque el batch principal se compromete igualmente al final.
-    """
-    return db
-
-
 def _display_name(persona: models.Persona | None) -> str:
     if not persona:
         return "Usuario"
@@ -189,9 +180,9 @@ def notify_task_assigned(
 
             from backend.services.notification_hub import notify as _hub_notify
 
-            if recipient_id:
+            if sent and recipient_id:
                 _hub_notify(
-                    db_noop=_make_nop_session(db),
+                    db=db,
                     user_ids=[_UUID(str(recipient_id))],
                     event_type="task_assigned",
                     title=notification_title,
@@ -200,6 +191,7 @@ def notify_task_assigned(
                     channels=("email",),
                     dedupe_key=f"task:{task.id}",
                     email_context={"task_id": str(task.id)},
+                    commit=False,
                 )
         except Exception:
             # El hub es best-effort: jamás debe romper el flujo operativo

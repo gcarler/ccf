@@ -57,7 +57,8 @@ async def upload_comment_attachment(
     if len(contents) > MAX_SIZE:
         raise HTTPException(status_code=413, detail="El archivo supera el límite de 25 MB")
 
-    upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static", "comment_attachments")
+    runtime_root = os.getenv("CCF_RUNTIME_DIR", os.path.join(os.path.dirname(__file__), "..", ".."))
+    upload_dir = os.path.join(runtime_root, "static", "comment_attachments")
     os.makedirs(upload_dir, exist_ok=True)
 
     ext = os.path.splitext(file.filename or "")[1] or ".bin"

@@ -521,7 +521,7 @@ def update_notification(
 
         suppress_pending_for_notification(db, _UUID(str(notification_id)))
     except Exception:
-        pass
+        logger.debug("Best-effort update_notification failed; retaining fallback")
     return updated
 
 
