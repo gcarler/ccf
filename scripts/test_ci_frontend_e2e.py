@@ -104,8 +104,8 @@ class FixtureMediaTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="ccf-e2e-") as scratch:
             env = self.environment(scratch)
             for override in (
-                {"UPLOADS_DIR": "/root/ccf/uploads"},
-                {"CCF_E2E_WORKDIR": "/root/ccf"},
+                {"UPLOADS_DIR": str(Path(scratch).parent / "production-uploads")},
+                {"CCF_E2E_WORKDIR": str(Path(scratch).parent / "production-root")},
                 {"DATABASE_URL": "postgresql://test@localhost/ccf_db", "TEST_DATABASE_URL": "postgresql://test@localhost/ccf_db"},
             ):
                 with self.subTest(override=override), self.assertRaises(ValueError):
