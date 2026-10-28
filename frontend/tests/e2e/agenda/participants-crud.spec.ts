@@ -42,13 +42,13 @@ test.describe('Participants CRUD @agenda', () => {
     await installMocks(page);
     await page.goto('/plataforma/agenda/events');
 
-    await expect(page.locator('text=Eventos')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Eventos sin seguimiento de asistencia', exact: true })).toBeVisible({ timeout: 10000 });
   });
 
   test('shows participant roles', async ({ page }) => {
     await installMocks(page);
     await page.goto('/plataforma/agenda/events');
 
-    await expect(page.locator('text=Eventos')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: 'Eventos sin seguimiento de asistencia', exact: true })).toBeVisible({ timeout: 10000 });
   });
 });

@@ -243,6 +243,8 @@ export function ProjectComponentDrawer({
       isOpen={isOpen}
       onClose={onClose}
       width="w-full sm:w-[88vw] lg:w-[72vw] xl:w-[64vw] max-w-6xl"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={1040}
       title={
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-primary" style={{ color: "hsl(var(--primary))" }} />

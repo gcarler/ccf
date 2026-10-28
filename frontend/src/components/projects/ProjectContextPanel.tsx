@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Bell, CheckCircle2, ChevronLeft, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, Wrench, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
@@ -39,6 +39,8 @@ interface ProjectContextPanelProps {
     onSelect?: () => void | Promise<void>;
     variant?: "warning" | "destructive";
   }>;
+  /** Notifica el ancho actual (px) al montar y cada vez que el usuario redimensiona el panel (coexistencia con paneles adyacentes). */
+  onWidthChange?: (width: number) => void;
 }
 
 /** Orden por defecto (TKT-PRO-SCROLLBARS-AND-MOVABLE-TABS-01): donde reordenar las pestañas sigue respetando esta secuencia base. */
@@ -98,6 +100,7 @@ export default function ProjectContextPanel({
   isMinimized: controlledMinimized,
   onToggleMinimize,
   tools,
+  onWidthChange,
 }: ProjectContextPanelProps) {
   const { project, tasks, activities, reloadProject } = useProjectUpdate();
   const { token } = useAuth();
@@ -133,6 +136,12 @@ export default function ProjectContextPanel({
   });
 
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
+
+  // Publica el ancho actual del sidebar: el detalle lo usa para desplazar el
+  // hub de herramientas (offsetRight) y lograr coexistencia lado a lado.
+  useEffect(() => {
+    onWidthChange?.(resize.width);
+  }, [resize.width, onWidthChange]);
   const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, refresh: refreshProjectInbox, markAsRead } = useProjectInbox(project?.id);
   const { notifications } = useNotifications();
   const handleInboxSocketEvent = useCallback((payload: WsEvent) => {
@@ -338,7 +347,7 @@ export default function ProjectContextPanel({
               type="button"
               onClick={onClose}
               aria-label="Cerrar panel de contexto"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] transition-colors mb-2"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--danger-text))] transition-colors mb-2"
             >
               <X size={15} />
             </button>
@@ -411,7 +420,7 @@ export default function ProjectContextPanel({
                 type="button"
                 onClick={onClose}
                 aria-label="Cerrar panel de contexto"
-                className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+                className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger-text))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
               >
                 <X size={13} />
               </button>
@@ -511,7 +520,7 @@ export default function ProjectContextPanel({
                 const ToolIcon = tool.icon;
                 const variantClass =
                   tool.variant === "destructive"
-                    ? "border-[hsl(var(--destructive)/0.35)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]"
+                    ? "border-[hsl(var(--destructive)/0.35)] text-[hsl(var(--danger-text))] hover:bg-[hsl(var(--destructive)/0.08)]"
                     : tool.variant === "warning"
                       ? "border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] hover:bg-[hsl(var(--warning-muted))]"
                       : "border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]";
@@ -565,8 +574,8 @@ export default function ProjectContextPanel({
                     <span className={clsx(
                       "rounded-full border px-2 py-0.5 text-2xs font-bold",
                       overdueTasks > 0
-                        ? "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]"
-                        : "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
+                        ? "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--danger-text))]"
+                        : "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success-text))]"
                     )}>
                       {overdueTasks > 0 ? "Alerta de Atraso" : "Cronograma en Regla"}
                     </span>
@@ -581,11 +590,11 @@ export default function ProjectContextPanel({
                     <span className={clsx(
                       "rounded-full border px-2 py-0.5 text-2xs font-bold",
                       budgetStatus === "Exceso sobre BAC"
-                        ? "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]"
+                        ? "border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--danger-text))]"
                         : budgetStatus === "Presupuesto Cuadrado"
-                          ? "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]"
+                          ? "border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success-text))]"
                           : budgetStatus === "Reserva por Distribuir"
-                            ? "border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]"
+                            ? "border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning-text))]"
                             : "border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]"
                     )}>
                       {budgetStatus}
@@ -625,7 +634,7 @@ export default function ProjectContextPanel({
             )}
 
             <div className="mt-5 flex items-center gap-2 text-xs text-[hsl(var(--text-primary))]">
-              <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
+              <CheckCircle2 size={14} className="text-[hsl(var(--success-text))]" />
               Los cambios se sincronizan con List y Kanban.
             </div>
           </div>
@@ -701,13 +710,13 @@ function ProjectInboxContent({
   }
 
   if (error) {
-    return <div className="p-4 text-sm text-[hsl(var(--destructive))]">{error}</div>;
+    return <div className="p-4 text-sm text-[hsl(var(--danger-text))]">{error}</div>;
   }
 
   if (items.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-[hsl(var(--muted-foreground))]">
-        <CheckCircle2 size={24} className="text-[hsl(var(--success))]" />
+        <CheckCircle2 size={24} className="text-[hsl(var(--success-text))]" />
         <p className="text-sm font-semibold">Inbox al día</p>
         <p className="text-xs">No hay comentarios ni tareas asignadas pendientes en este proyecto.</p>
       </div>

@@ -60,14 +60,14 @@ const STATUS_CONFIG = {
   },
   committed: {
     label: "Comprometido",
-    color: "hsl(var(--warning))",
+    color: "hsl(var(--warning-text))",
     bg: "hsl(var(--warning) / 0.12)",
     border: "hsl(var(--warning) / 0.3)",
     icon: TrendingDown,
   },
   paid: {
     label: "Pagado",
-    color: "hsl(var(--success))",
+    color: "hsl(var(--success-text))",
     bg: "hsl(var(--success) / 0.12)",
     border: "hsl(var(--success) / 0.3)",
     icon: CheckCircle2,
@@ -282,10 +282,10 @@ export function ProjectBudgetDrawer({
   const burnRate = summary?.burn_rate_percent ?? 0;
   const burnColor =
     burnRate > 90
-      ? "hsl(var(--destructive))"
+      ? "hsl(var(--danger-text))"
       : burnRate > 70
-      ? "hsl(var(--warning))"
-      : "hsl(var(--success))";
+      ? "hsl(var(--warning-text))"
+      : "hsl(var(--success-text))";
 
   const bacValue = summary?.budget_allocated ?? budgetAllocated ?? 0;
   const contingencyReserve = summary?.contingency_reserve ?? 0;
@@ -330,13 +330,13 @@ export function ProjectBudgetDrawer({
             </div>
             <div className="flex flex-col">
               <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Desembolsado</span>
-              <span className="text-base font-bold" style={{ color: "hsl(var(--success))" }}>
+              <span className="text-base font-bold" style={{ color: "hsl(var(--success-text))" }}>
                 ${(summary?.paid_amount ?? 0).toLocaleString("es-CO")}
               </span>
             </div>
             <div className="flex flex-col">
               <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Comprometido</span>
-              <span className="text-base font-bold" style={{ color: "hsl(var(--warning))" }}>
+              <span className="text-base font-bold" style={{ color: "hsl(var(--warning-text))" }}>
                 ${(summary?.committed_amount ?? 0).toLocaleString("es-CO")}
               </span>
             </div>
@@ -402,7 +402,7 @@ export function ProjectBudgetDrawer({
                       : "hsl(var(--success) / 0.35)",
                   color:
                     sentinel.severity_color === "destructive"
-                      ? "hsl(var(--destructive))"
+                      ? "hsl(var(--danger-text))"
                       : sentinel.severity_color === "warning"
                       ? "hsl(var(--warning-text))"
                       : "hsl(var(--success-text))",
@@ -435,7 +435,7 @@ export function ProjectBudgetDrawer({
               <span
                 data-testid="budget-contingency-reserve"
                 className="text-sm font-bold mt-0.5 block"
-                style={{ color: "hsl(var(--warning))" }}
+                style={{ color: "hsl(var(--warning-text))" }}
               >
                 ${contingencyReserve.toLocaleString("es-CO")}
               </span>
@@ -975,7 +975,7 @@ export function ProjectBudgetDrawer({
                       <button
                         onClick={() => requestDelete(exp)}
                         className="p-1.5 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ color: "hsl(var(--destructive))" }}
+                        style={{ color: "hsl(var(--danger-text))" }}
                         title="Eliminar"
                         aria-label={`Eliminar gasto: ${exp.description || catLabel}`}
                       >
@@ -1020,7 +1020,7 @@ export function ProjectBudgetDrawer({
                           className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-opacity hover:opacity-90"
                           style={{
                             backgroundColor: "hsl(var(--success) / 0.15)",
-                            color: "hsl(var(--success))",
+                            color: "hsl(var(--success-text))",
                           }}
                         >
                           Marcar Pagado
@@ -1032,7 +1032,7 @@ export function ProjectBudgetDrawer({
                           className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-opacity hover:opacity-90"
                           style={{
                             backgroundColor: "hsl(var(--warning) / 0.15)",
-                            color: "hsl(var(--warning))",
+                            color: "hsl(var(--warning-text))",
                           }}
                         >
                           Comprometer

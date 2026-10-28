@@ -16,6 +16,8 @@ interface RightPanelProps {
     /** Opt in to persistent resizing and an overlay above workspace navigation. */
     resizeStorageKey?: string;
     resizeDefaultWidth?: number;
+    /** Habilita redimensión manual persistente (usa resizeStorageKey o 'workspace:right_panel_width' por defecto). */
+    resizable?: boolean;
     maximized?: boolean;
     /** Título del panel. Acepta string o nodo React (p. ej. icono + texto). */
     title?: React.ReactNode;
@@ -37,6 +39,19 @@ interface RightPanelProps {
     className?: string;
     /** Clases adicionales para el área de contenido */
     contentClassName?: string;
+    /**
+     * Renderiza el backdrop difuminado que bloquea el resto de la pantalla.
+     * `false` → panel no modal: el resto de la plataforma sigue accesible
+     * (coexistencia de herramientas laterales, axioma “sin modales bloqueantes”).
+     * Default `true` para preservar el comportamiento de drawers aislados.
+     */
+    hasBackdrop?: boolean;
+    /**
+     * Desplazamiento (px) desde el borde derecho de la ventana: el panel
+     * usa `right: offsetRightpx` en vez de `right: 0`, para no tapar
+     * paneles adyacentes (por ejemplo el sidebar de contexto del proyecto).
+     */
+    offsetRight?: number;
 }
 
 /**
@@ -53,6 +68,7 @@ function RightPanel({
     embedded = false,
     resizeStorageKey,
     resizeDefaultWidth = 960,
+    resizable,
     maximized = false,
     title = 'Actividad',
     subtitle,
@@ -66,17 +82,40 @@ function RightPanel({
     onClose,
     className,
     contentClassName,
+    hasBackdrop = true,
+    offsetRight,
 }: RightPanelProps) {
     const { layers, closeLayer, rightMode } = useSidebarLayers();
     const open = controlledOpen ?? isOpenAlias;
     const isControlled = open !== undefined;
     const isOpen = isControlled ? open : layers.RIGHT;
     const panelRef = useRef<HTMLDivElement>(null);
+    const nonModalTriggerRef = useRef<HTMLElement | null>(null);
     const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
+    const [viewportWidth, setViewportWidth] = useState(0);
+    useEffect(() => {
+        setMounted(true);
+        const measureViewport = () => setViewportWidth(window.innerWidth);
+        measureViewport();
+        window.addEventListener('resize', measureViewport);
+        return () => window.removeEventListener('resize', measureViewport);
+    }, []);
+    // Adjacent panels share desktop space. Mobile uses the full viewport.
+    const effectiveOffset = viewportWidth >= 1024 && Number.isFinite(offsetRight)
+        ? Math.max(0, Math.min(offsetRight ?? 0, viewportWidth - 348))
+        : 0;
+
+    const effectiveStorageKey = resizeStorageKey ?? (resizable ? 'workspace:right_panel_width' : undefined);
+    const hasResizing = Boolean(effectiveStorageKey) && !maximized && !embedded;
 
     const isOverlay = !embedded && (isControlled || rightMode === 'overlay');
-    const resize = useResizablePanel({ storageKey: resizeStorageKey ?? 'workspace:right_panel_width', defaultWidth: resizeDefaultWidth, panelRef, enabled: Boolean(resizeStorageKey) && !maximized && !embedded && Boolean(isOpen) && mounted });
+    const resize = useResizablePanel({
+        storageKey: effectiveStorageKey ?? 'workspace:right_panel_width',
+        defaultWidth: resizeDefaultWidth,
+        reservedWidth: 48 + effectiveOffset,
+        panelRef,
+        enabled: hasResizing && Boolean(isOpen) && mounted,
+    });
 
     const handleClose = () => {
         if (isControlled) {
@@ -88,10 +127,27 @@ function RightPanel({
 
     // Focus trap + Escape: only in controlled/overlay mode where the panel
     // behaves as a modal drawer. In push mode it is part of the normal layout.
+    // Sin backdrop el panel NO es modal: no captura el foco ni bloquea el resto
+    // de la pantalla, para que otras herramientas sigan disponibles.
     useFocusTrap(panelRef, {
-        active: isOpen && isOverlay && (!resizeStorageKey || mounted),
+        active: isOpen && isOverlay && hasBackdrop && (!hasResizing || mounted),
         onEscape: handleClose,
     });
+
+    useEffect(() => {
+        if (!isOpen || !isOverlay || hasBackdrop || !mounted) return;
+        const active = document.activeElement;
+        nonModalTriggerRef.current = active instanceof HTMLElement && active !== document.body ? active : null;
+        const panel = panelRef.current;
+        return () => {
+            const triggerElement = nonModalTriggerRef.current;
+            const focused = document.activeElement;
+            if (triggerElement?.isConnected && (focused === document.body || (focused && panel?.contains(focused)))) {
+                triggerElement.focus({ preventScroll: true });
+            }
+            nonModalTriggerRef.current = null;
+        };
+    }, [isOpen, isOverlay, hasBackdrop, mounted]);
 
     if (embedded) {
         if (!isOpen) return null;
@@ -114,6 +170,13 @@ function RightPanel({
         : undefined;
     const widthClass = typeof width === 'string' ? width : undefined;
 
+    const panelStyle = {
+        ...(hasResizing ? (resize.style as React.CSSProperties) : widthStyle),
+        ...(offsetRight !== undefined
+            ? { right: effectiveOffset ? `${effectiveOffset}px` : 0 }
+            : null),
+    };
+
     const panel = (
         <PanelContainer
             ref={panelRef}
@@ -122,21 +185,20 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: typeof width === 'number' ? width : 480, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={resizeStorageKey && !maximized ? resize.style : widthStyle}
+            style={panelStyle}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                 widthClass,
                 isControlled || rightMode === 'overlay'
-                    ? clsx('fixed right-0 top-10 h-[calc(100vh-2.5rem)] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]', resizeStorageKey ? 'z-[80]' : 'z-[35]')
+                    ? clsx('fixed right-0 top-10 h-[calc(100vh-2.5rem)] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]', hasResizing ? 'z-[80]' : 'z-[35]')
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]',
                 className,
             )}
             tabIndex={-1}
             role={isOverlay ? 'dialog' : 'complementary'}
-            aria-modal={isOverlay ? 'true' : undefined}
+            aria-modal={isOverlay && hasBackdrop ? 'true' : undefined}
             aria-label={typeof title === 'string' ? title : 'Panel'}
         >
-            {resizeStorageKey && !maximized && <PanelResizeHandle resize={resize} />}
             {/* Panel header */}
             <div className="shrink-0 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-start justify-between gap-[calc(0.5rem+var(--density-gap-delta,0px))]">
                 <div className="min-w-0">
@@ -165,6 +227,8 @@ function RightPanel({
                 </div>
             </div>
 
+            {hasResizing && <PanelResizeHandle resize={resize} />}
+
             {/* Scrollable content */}
             <div className={clsx('flex-1 overflow-y-auto overflow-x-hidden', contentClassName)}>
                 {children}
@@ -179,21 +243,24 @@ function RightPanel({
                 <AnimatePresence>
                     {isOpen && (
                         <>
-                            {/* Backdrop */}
-                            <motion.div
-                                key="right-backdrop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className={clsx(
-                                    'bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
-                                    resizeStorageKey ? 'z-[79]' : 'z-[34]',
-                                    isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
-                                )}
-                                onClick={handleClose}
-                                aria-hidden="true"
-                            />
+                            {/* Backdrop: solo en modo modal (hasBackdrop); sin él el resto
+                                de la plataforma permanece clickeable y sin difuminado. */}
+                            {hasBackdrop && (
+                                <motion.div
+                                    key="right-backdrop"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className={clsx(
+                                        'bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
+                                        hasResizing ? 'z-[79]' : 'z-[34]',
+                                        isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
+                                    )}
+                                    onClick={handleClose}
+                                    aria-hidden="true"
+                                />
+                            )}
                             {panel}
                         </>
                     )}
@@ -201,7 +268,7 @@ function RightPanel({
             </>
         );
         // Project tools must escape the workspace's central stacking context.
-        return resizeStorageKey ? (mounted ? createPortal(overlay, document.body) : null) : overlay;
+        return hasResizing ? (mounted ? createPortal(overlay, document.body) : null) : overlay;
     }
 
     // Push mode: panel is inline, AnimatePresence handles width

@@ -50,6 +50,7 @@ async function installAgendaDeepMocks(page: Page) {
 
   const findEvent = (eventId: number) => eventsState.find((event) => event.id === eventId);
 
+  await page.clock.setFixedTime(new Date('2026-07-20T08:00:00.000Z'));
   await installMockPlatformSession(page, {
     role: 'admin',
     permissions: {
@@ -57,6 +58,13 @@ async function installAgendaDeepMocks(page: Page) {
       'spiritual_life:edit': 'allow',
     },
   });
+
+  for (const pattern of ['**/api/agenda/resources', '**/api/agenda/events/*/reservations']) {
+    await page.route(pattern, async (route) => {
+      if (route.request().method() === 'GET') await route.fulfill({ status: 200, json: [] });
+      else await route.fallback();
+    });
+  }
 
   await page.route('**/api/agenda/events/by-date-range**', async (route) => {
     await route.fulfill({

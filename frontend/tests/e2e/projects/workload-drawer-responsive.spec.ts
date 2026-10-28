@@ -219,13 +219,14 @@ test('ProjectWorkloadDrawer fits mobile viewport and remains accessible with rea
     throw new Error(`Project detail did not load. Alerts: ${JSON.stringify(await page.getByRole('alert').allInnerTexts())}; text: ${JSON.stringify((await page.locator('body').innerText()).slice(-500))}; API: ${apiResponses.join(', ')}; page errors: ${pageErrors.join(', ')}; console: ${consoleErrors.join(' | ')}`);
   }
   await expect(page.getByRole('heading', { name: project.title })).toBeVisible();
-  await page.getByRole('button', { name: 'Abrir acciones del proyecto' }).click();
-  await page.getByRole('dialog', { name: 'Acciones del proyecto' }).getByRole('button', { name: 'Carga' }).click();
+  const tools = page.getByRole('complementary', { name: 'Contexto del proyecto' });
+  await tools.getByRole('tab', { name: 'Herramientas', exact: true }).click();
+  await tools.getByRole('button', { name: 'Carga', exact: true }).click();
 
-  const drawerName = 'Capacidad de Equipo y Carga de Trabajo';
+  const drawerName = 'Centro de gestión del proyecto';
   const drawer = page.getByRole('dialog', { name: drawerName });
   const drawerSelector = `[role="dialog"][aria-label="${drawerName}"]`;
-  await expect(drawer.getByText('Preparar materiales comunitarios')).toBeVisible();
+  await expect(drawer.getByRole('rowheader', { name: 'Preparar materiales comunitarios' })).toBeVisible();
   await expect(drawer.getByRole('progressbar', { name: 'Carga de Ana Proyecto' })).toHaveAttribute('aria-valuenow', '40');
   await expect(drawer).toHaveCSS('transform', 'none');
 
@@ -247,13 +248,13 @@ test('ProjectWorkloadDrawer fits mobile viewport and remains accessible with rea
   expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth + 1);
   await expectNoSeriousAccessibilityViolations(page, drawerSelector);
 
-  await page.keyboard.press('Escape');
+  await drawer.getByRole('button', { name: 'Cerrar panel', exact: true }).click();
   await expect(drawer).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Abrir acciones del proyecto' }).click();
-  await page.getByRole('dialog', { name: 'Acciones del proyecto' }).getByRole('button', { name: 'Reportes' }).click();
+  await tools.getByRole('tab', { name: 'Herramientas', exact: true }).click();
+  await tools.getByRole('button', { name: 'Reportes', exact: true }).click();
 
-  const reportName = 'Reportes y Exportación Ejecutiva';
+  const reportName = 'Centro de gestión del proyecto';
   const reportDrawer = page.getByRole('dialog', { name: reportName });
   const reportSelector = `[role="dialog"][aria-label="${reportName}"]`;
   await expect(reportDrawer.getByText('Distribución de Horas y Esfuerzo')).toBeVisible();
@@ -276,7 +277,7 @@ test('ProjectWorkloadDrawer fits mobile viewport and remains accessible with rea
   expect(reportGeometry.documentWidth).toBeLessThanOrEqual(reportGeometry.viewportWidth + 1);
   await expectNoSeriousAccessibilityViolations(page, reportSelector);
 
-  await page.keyboard.press('Escape');
+  await reportDrawer.getByRole('button', { name: 'Cerrar panel', exact: true }).click();
   await expect(reportDrawer).toHaveCount(0);
   expect(mutationRequests).toEqual([]);
   expect(pageErrors).toEqual([]);

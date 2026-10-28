@@ -36,6 +36,7 @@ const MOCK_EVENTS: CalendarItem[] = [
 ];
 
 async function installWeekMocks(page: Page) {
+  await page.clock.setFixedTime(new Date('2026-07-28T08:00:00.000Z'));
   await installMockPlatformSession(page, {
     role: 'admin',
     permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
@@ -65,8 +66,8 @@ test.describe('Week view @agenda', () => {
     await installWeekMocks(page);
     await page.goto('/plataforma/calendar');
 
-    await expect(page.locator('text=Reunión de equipo')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Sala A')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Vista semanal', exact: true }).getByText('Reunión de equipo')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('region', { name: 'Vista semanal', exact: true }).getByText('Sala A')).toBeVisible();
   });
 
   test('shows all-day events in the all-day row', async ({ page }) => {
@@ -83,6 +84,6 @@ test.describe('Week view @agenda', () => {
     await page.click('button:has-text("Semana")');
     await page.click('button:has-text("Día")');
 
-    await expect(page.locator('text=Reunión de equipo')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('region', { name: 'Vista diaria', exact: true }).getByText('Reunión de equipo')).toBeVisible({ timeout: 10000 });
   });
 });

@@ -194,7 +194,9 @@ export function ProjectBaselineDrawer({
       title="Línea Base y Control de Varianza (Gantt)"
       open={isOpen}
       onClose={onClose}
-      width={520}
+      width="w-full sm:w-[90vw] lg:w-[78vw] xl:w-[74vw] 2xl:w-[70vw] max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={960}
     >
       <div className="flex flex-col h-full space-y-5 p-5 text-[hsl(var(--foreground))] overflow-y-auto">
         {(latestLoadError || historyLoadError) && (

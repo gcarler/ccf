@@ -92,7 +92,9 @@ test('Projects preserves local whiteboard edits after a stale-version conflict',
     response.url().includes(`/api/projects/${projectId}/whiteboard`)
     && response.request().method() === 'GET'
   ));
-  await page.getByRole('button', { name: 'Pizarra', exact: true }).click();
+  const tools = page.getByRole('complementary', { name: 'Contexto del proyecto' });
+  await tools.getByRole('tab', { name: 'Herramientas', exact: true }).click();
+  await tools.getByRole('button', { name: 'Pizarra', exact: true }).click();
   await boardLoaded;
   await page.locator('canvas.whiteboard-canvas').first().waitFor({ state: 'visible' });
   const conflictResponse = page.waitForResponse((response) => (

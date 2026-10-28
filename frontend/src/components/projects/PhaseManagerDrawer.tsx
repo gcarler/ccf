@@ -340,7 +340,14 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
     };
 
     return (
-        <RightPanel open={true} onClose={onClose} title="Gestionar Fases" width="w-full sm:w-[85vw] lg:w-[68vw] xl:w-[60vw] max-w-5xl">
+        <RightPanel
+            open={true}
+            onClose={onClose}
+            title="Gestionar Fases"
+            width="w-full sm:w-[85vw] lg:w-[68vw] xl:w-[60vw] max-w-none"
+            resizeStorageKey="workspace:project_tools_width"
+            resizeDefaultWidth={960}
+        >
             <div className="flex flex-col h-full">
                 {error && (
                     <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">

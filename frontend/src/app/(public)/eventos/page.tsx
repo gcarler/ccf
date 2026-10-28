@@ -89,13 +89,13 @@ export default function EventosPage() {
   const heroSlides = useMemo(() => {
     return [
       {
-        src: "/images/events/escuela-dominical.jpg",
+        src: "/og-default.png",
         alt: "Culto y Escuela Dominical",
         title: "Escuela Dominical y Culto de Adoración",
         caption: "Cada domingo en Sede Norte y sedes filiales",
       },
       {
-        src: "/images/events/faros-en-casa.jpg",
+        src: "/og-default.png",
         alt: "Faros en Casa",
         title: "Faros en Casa: Grupos de Hogar",
         caption: "Cada miércoles a las 19:30 hrs",

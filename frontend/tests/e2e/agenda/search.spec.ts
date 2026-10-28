@@ -34,6 +34,7 @@ const SEARCH_EVENTS: CalendarItem[] = [
 ];
 
 async function installMocks(page: Page) {
+  await page.clock.setFixedTime(new Date('2026-07-28T08:00:00.000Z'));
   await installMockPlatformSession(page, {
     role: 'admin',
     permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
@@ -53,7 +54,7 @@ test.describe('Search bar @agenda', () => {
     await installMocks(page);
     await page.goto('/plataforma/calendar');
 
-    const searchInput = page.locator('input[placeholder*="Buscar"]');
+    const searchInput = page.locator('input[placeholder^="Busca eventos"]');
     await expect(searchInput).toBeVisible({ timeout: 10000 });
   });
 
@@ -61,7 +62,7 @@ test.describe('Search bar @agenda', () => {
     await installMocks(page);
     await page.goto('/plataforma/calendar');
 
-    const searchInput = page.locator('input[placeholder*="Buscar"]');
+    const searchInput = page.locator('input[placeholder^="Busca eventos"]');
     await searchInput.click();
     await expect(searchInput).toBeFocused();
   });
@@ -70,7 +71,7 @@ test.describe('Search bar @agenda', () => {
     await installMocks(page);
     await page.goto('/plataforma/calendar');
 
-    const searchInput = page.locator('input[placeholder*="Buscar"]');
+    const searchInput = page.locator('input[placeholder^="Busca eventos"]');
     await searchInput.fill('Conferencia');
     await expect(searchInput).toHaveValue('Conferencia');
   });

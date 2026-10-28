@@ -169,10 +169,10 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                                     className={clsx(
                                         'px-2 py-0.5 rounded-full text-2xs font-bold border',
                                         rag === 'critical'
-                                            ? 'border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
+                                            ? 'border-[hsl(var(--destructive)/0.35)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--danger-text))]'
                                             : rag === 'at_risk'
-                                            ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
-                                            : 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                            ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))]'
+                                            : 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))]'
                                     )}
                                 >
                                     {ragLabel}
@@ -252,7 +252,7 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                         Avance PMI (0/50/100): {portfolioMetrics.avgProgress}%
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success-text))]">
                         <CheckCircle2 size={11} />
                         En Ruta: {portfolioMetrics.onTrackCount}
                     </span>
@@ -260,7 +260,7 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                         className={clsx(
                             'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-bold border',
                             portfolioMetrics.atRiskCount > 0
-                                ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
+                                ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))]'
                                 : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
                         )}
                     >

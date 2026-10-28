@@ -2,6 +2,7 @@ import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { axe } from "jest-axe";
 import { ClipboardCheck, FolderArchive, ListTree, Target } from "lucide-react";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import {
@@ -14,6 +15,7 @@ const META: ProjectHubModuleMeta[] = [
   { key: "wbs", label: "EDT / WBS y Diccionario", icon: ListTree },
   { key: "drive", label: "Drive", icon: FolderArchive },
   { key: "governance", label: "Gobernanza PMI", icon: ClipboardCheck },
+  { key: "pmo", label: "Matriz PMO", icon: ClipboardCheck },
 ];
 
 const RENDERERS = {
@@ -21,6 +23,7 @@ const RENDERERS = {
   drive: () => <div data-testid="drive-content">Drive</div>,
   governance: () => <div data-testid="governance-content">Gobernanza PMI</div>,
   wbs: () => <div data-testid="wbs-content">EDT / WBS y Diccionario</div>,
+  pmo: () => <div data-testid="pmo-content">Matriz PMO</div>,
 };
 
 function renderHub(
@@ -48,6 +51,14 @@ function renderHub(
 }
 
 describe("ProjectManagementHubDrawer", () => {
+  it("keeps tab activation and closing as separate accessible controls", async () => {
+    const { container } = renderHub();
+    expect(screen.getByRole("tab", { name: "KPIs" }).querySelector("button")).toBeNull();
+    const tablist = screen.getByRole("tablist", { name: "Herramientas abiertas" });
+    expect(tablist).toHaveAttribute("aria-owns", screen.getAllByRole("tab").map(tab => tab.id).join(' '));
+    expect(tablist.querySelector('button[aria-label^="Cerrar"]')).toBeNull();
+    expect((await axe(container)).violations).toEqual([]);
+  });
   it("soporta la llave 'ccb' en la tira de pestañas y monta solo su contenido activo", () => {
     const ccbMeta: ProjectHubModuleMeta[] = [
       { key: "kpis", label: "KPIs", icon: Target },
@@ -195,5 +206,30 @@ describe("ProjectManagementHubDrawer", () => {
     expect(screen.queryByTestId("governance-content")).not.toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /EDT \/ WBS y Diccionario/ }));
     expect(props.onActivateModule).toHaveBeenCalledWith("wbs");
+  });
+
+  it("operar en modo coexistencia: sin backdrop ni aria-modal y con offsetRight aplicado", () => {
+    renderHub({ offsetRight: 420 });
+
+    const dialog = screen.getByRole("dialog");
+    // El hub NO es modal: el resto de la plataforma (sidebar de contexto,
+    // otras herramientas) debe seguir clickeable mientras se trabaja.
+    expect(dialog).not.toHaveAttribute("aria-modal");
+    // Se retira del borde derecho el ancho del panel de contexto adjacente.
+    expect(dialog).toHaveStyle({ right: "420px" });
+  });
+
+  it("expone Matriz PMO en el Hub y monta solo su renderer activo", async () => {
+    const user = userEvent.setup();
+    const { props } = renderHub({
+      openModules: ["pmo"],
+      activeModule: "pmo",
+    });
+
+    expect(screen.getByRole("tab", { name: /Matriz PMO/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("pmo-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("kpis-content")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Matriz PMO/ }));
+    expect(props.onActivateModule).toHaveBeenCalledWith("pmo");
   });
 });

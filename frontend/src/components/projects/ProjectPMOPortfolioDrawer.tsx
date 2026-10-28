@@ -16,6 +16,7 @@ import type {
 interface ProjectPMOPortfolioDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 type ApproachFilter = "all" | ProjectDevelopmentApproach;
@@ -81,7 +82,7 @@ function money(value: number): string {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
 }
 
-export function ProjectPMOPortfolioDrawer({ isOpen, onClose }: ProjectPMOPortfolioDrawerProps) {
+export function ProjectPMOPortfolioDrawer({ isOpen, onClose, embedded }: ProjectPMOPortfolioDrawerProps) {
   const { token } = useAuth();
   const [data, setData] = useState<PMOPortfolioMatrixResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -118,11 +119,14 @@ export function ProjectPMOPortfolioDrawer({ isOpen, onClose }: ProjectPMOPortfol
 
   return (
     <RightPanel
+      embedded={embedded}
       open={isOpen}
       onClose={onClose}
       title="Portafolio PMO Ministerial"
       subtitle="Diagnóstico multi-proyecto CPI vs SPI · PMI Vol. 1 y 5"
-      width="w-full sm:max-w-5xl xl:max-w-7xl"
+      width="w-full sm:w-[92vw] lg:w-[84vw] xl:w-[76vw] max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={1040}
       contentClassName="bg-[hsl(var(--surface-1))]"
     >
       <div className="space-y-5 p-4 sm:p-6" data-testid="pmo-portfolio-drawer">

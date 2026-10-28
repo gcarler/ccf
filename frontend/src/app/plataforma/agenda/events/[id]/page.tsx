@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import type { AgendaEvent } from "@/types/agenda";
+import { AgendaEventResources } from "@/components/agenda/AgendaEventResources";
 
 export default function AgendaEventDetailPage() {
     const { token } = useAuth();
@@ -209,6 +210,7 @@ export default function AgendaEventDetailPage() {
                             </div>
                         )}
                     </section>
+                    {event && !loading && <AgendaEventResources eventId={String(event.id)} token={token} />}
                 </div>
             </div>
         </WorkspaceLayout>

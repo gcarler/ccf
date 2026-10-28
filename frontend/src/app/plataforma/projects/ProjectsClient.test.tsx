@@ -147,9 +147,10 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
     );
   });
 
-  it('abre la Matriz PMO CPI×SPI desde las acciones del portafolio', () => {
+  it('abre la Matriz PMO CPI×SPI desde el menú Herramientas del portafolio', () => {
     render(<ProjectsClient initialProjects={[]} initialViewType="list" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Matriz PMO (CPI×SPI)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Herramientas' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Matriz PMO (CPI×SPI)' }));
     expect(screen.getByRole('dialog', { name: 'Matriz PMO CPI por SPI' })).toBeInTheDocument();
   });
 
@@ -616,7 +617,7 @@ describe('ProjectsClient PMI §6 — Franja Ejecutiva de Centro de Comando de Po
     expect(strip).toHaveTextContent('Portafolio Activo: 3 proyecto(s)');
     expect(strip).toHaveTextContent('En Ejecucion (§4.3): 2');
     expect(strip).toHaveTextContent('Salud RAG: 1 en riesgo');
-    expect(strip.innerHTML).toContain('text-[hsl(var(--warning))]');
+    expect(strip.innerHTML).toContain('text-[hsl(var(--warning-text))]');
     expect(strip).toHaveTextContent('Cobertura Sponsor/PM: 1/3 con PM');
 
     // Portafolio sin riesgos → badge success y cobertura completa
@@ -634,7 +635,7 @@ describe('ProjectsClient PMI §6 — Franja Ejecutiva de Centro de Comando de Po
     const cleanStrip = await screen.findByTestId('projects-client-pmi-command-strip');
     expect(cleanStrip).toHaveTextContent('Salud RAG: 0 en riesgo');
     expect(cleanStrip).toHaveTextContent('Cobertura Sponsor/PM: 1/1 con PM');
-    expect(cleanStrip.innerHTML).toContain('text-[hsl(var(--success))]');
+    expect(cleanStrip.innerHTML).toContain('text-[hsl(var(--success-text))]');
   });
 });
 

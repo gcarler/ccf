@@ -14,6 +14,7 @@ const EVENTS = [
 ];
 
 async function installA11yMocks(page: Page) {
+  await page.clock.setFixedTime(new Date('2026-07-28T08:00:00.000Z'));
   await installMockPlatformSession(page, {
     role: 'admin',
     permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
@@ -21,6 +22,10 @@ async function installA11yMocks(page: Page) {
 
   await page.route('**/api/system/calendar**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(EVENTS) });
+  });
+
+  await page.route('**/api/agenda/events**', async (route) => {
+    await route.fulfill({ status: 200, json: [] });
   });
 
   await page.route('**/api/projects/_tasks**', async (route) => {
@@ -48,7 +53,8 @@ test.describe('Accessibility @agenda', () => {
     await page.goto('/plataforma/calendar');
     await expect(page.locator('text=Calendario')).toBeVisible({ timeout: 10000 });
 
-    const navButtons = page.locator('header button');
+    const navButtons = page.getByRole('button', { name: /^(Hoy|Semana|Crear)$/ });
+    await expect(navButtons.first()).toBeVisible();
     const count = await navButtons.count();
     expect(count).toBeGreaterThan(0);
 

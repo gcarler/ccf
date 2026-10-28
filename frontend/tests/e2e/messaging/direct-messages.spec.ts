@@ -331,7 +331,7 @@ test.describe('Messaging direct messages deep smoke', () => {
     await expect(page.locator('body')).toContainText(/María Salcedo/i);
     await expect(page.locator('body')).toContainText(/maria.salcedo@ccf.local/i);
 
-    await page.getByRole('button', { name: /María Salcedo/i }).click();
+    await page.getByRole('button', { name: 'Iniciar conversación con maria.salcedo' }).click();
     await expect(page.locator('body')).toContainText(/María Salcedo/i);
     await expect(page.locator('body')).toContainText(/Sin mensajes aún/i);
   });

@@ -770,8 +770,8 @@ export default function TaskDetailPanel({
                             className={clsx(
                                 'px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide border',
                                 isWbsDefinitionComplete
-                                    ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success,var(--primary)))] border-[hsl(var(--success)/0.3)]'
-                                    : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning,var(--primary)))] border-[hsl(var(--warning)/0.3)]'
+                                    ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.3)]'
+                                    : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)]'
                             )}
                         >
                             {isWbsDefinitionComplete ? 'Definición Completa' : 'Definición Incompleta'}
