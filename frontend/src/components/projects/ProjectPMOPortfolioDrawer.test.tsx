@@ -28,6 +28,7 @@ const portfolio: PMOPortfolioMatrixResponse = {
     q2_cost_acceleration: 1,
     q3_underutilized_capacity: 1,
     q4_critical_emergency: 1,
+    sin_datos: 0,
   },
   projects_matrix: [
     { project_id: "p1", title: "Ampliación sede", status: "active", development_approach: "predictive", pmo_type: "controlling", bac: 40000, ev: 20000, ac: 15000, cpi: 1.33, spi: 1.1, csi: 1.46, quadrant: "q1_optimal", progress_pct: 50, charter_status: "authorized" },
