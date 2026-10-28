@@ -136,8 +136,8 @@ export default function TaskMetaFields({
                         className={clsx(
                             'px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wider',
                             isPmiComplete
-                                ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]'
-                                : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'
+                                ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success-text))]'
+                                : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning-text))]'
                         )}
                     >
                         {completedPillarsCount}/4 pilares PMI
@@ -146,7 +146,7 @@ export default function TaskMetaFields({
                 <p
                     className={clsx(
                         'text-2xs font-medium',
-                        isPmiComplete ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--muted-foreground))]'
+                        isPmiComplete ? 'text-[hsl(var(--success-text))]' : 'text-[hsl(var(--muted-foreground))]'
                     )}
                 >
                     {isPmiComplete
@@ -239,7 +239,7 @@ export default function TaskMetaFields({
                         Crear Componente EDT
                     </p>
                     {componentError && (
-                        <p className="text-2xs text-[hsl(var(--destructive))] font-medium">{componentError}</p>
+                        <p className="text-2xs text-[hsl(var(--danger-text))] font-medium">{componentError}</p>
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div>

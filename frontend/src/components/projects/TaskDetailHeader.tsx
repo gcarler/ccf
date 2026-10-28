@@ -116,7 +116,7 @@ export default function TaskDetailHeader({
     return (
         <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))]">
             {error && (
-                <div role="alert" className="mb-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-[hsl(var(--warning))]">
+                <div role="alert" className="mb-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-[hsl(var(--warning-text))]">
                     <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
@@ -186,8 +186,8 @@ export default function TaskDetailHeader({
                         className={clsx(
                             'p-1.5 rounded-lg transition-all',
                             starred
-                                ? 'text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)]'
-                                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--warning))] hover:bg-[hsl(var(--surface-2))]'
+                                ? 'text-[hsl(var(--warning-text))] bg-[hsl(var(--warning)/0.1)]'
+                                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--warning-text))] hover:bg-[hsl(var(--surface-2))]'
                         )}
                     >
                         <Star size={14} fill={starred ? 'currentColor' : 'none'} />
@@ -206,7 +206,7 @@ export default function TaskDetailHeader({
                         onClick={onDeleteTask}
                         title="Eliminar tarea"
                         aria-label="Eliminar tarea"
-                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--danger-text))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
                     >
                         <Trash2 size={14} />
                     </button>
@@ -252,7 +252,7 @@ export default function TaskDetailHeader({
                         className={clsx(
                             'px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wider border',
                             earnedRuleCredit === 100
-                                ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))]'
                                 : earnedRuleCredit === 50
                                   ? 'border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
                                   : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'
@@ -267,8 +267,8 @@ export default function TaskDetailHeader({
                             className={clsx(
                                 'px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wider border',
                                 isOverdue
-                                    ? 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))]'
-                                    : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                                    ? 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--danger-text))]'
+                                    : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))]'
                             )}
                         >
                             {isOverdue ? 'Plazo Vencido' : 'En Plazo'}
