@@ -35,7 +35,9 @@ if config.config_file_name is not None:
 # Raises an actionable RuntimeError if .env is missing or the security
 # validator rejects the env values.
 settings = load_settings(start=__file__)
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# ConfigParser treats percent as interpolation, while URLs can contain encoded
+# credentials and query arguments. Escape only at this configuration boundary.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 

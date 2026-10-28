@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
 from typing import Any, Dict, List
 
 from backend.analytics import event_sink
+
+logger = logging.getLogger(__name__)
 
 
 def _connect():
@@ -76,7 +79,7 @@ def get_event_summary(days: int = 7) -> Dict[str, Any]:
         try:
             conn.close()
         except Exception:  # pragma: no cover
-            pass
+            logger.debug("Best-effort get_event_summary failed; retaining fallback")
 
 
 def _memory_course_performance(limit: int) -> List[Dict[str, Any]]:
@@ -149,7 +152,7 @@ def get_course_performance(limit: int = 10) -> List[Dict[str, Any]]:
         try:
             conn.close()
         except Exception:  # pragma: no cover
-            pass
+            logger.debug("Best-effort get_course_performance failed; retaining fallback")
 
 
 def list_raw_events(limit: int = 50) -> List[Dict[str, Any]]:
@@ -198,4 +201,4 @@ def list_raw_events(limit: int = 50) -> List[Dict[str, Any]]:
         try:
             conn.close()
         except Exception:  # pragma: no cover
-            pass
+            logger.debug("Best-effort list_raw_events failed; retaining fallback")

@@ -10,13 +10,14 @@ on:
 env:
   PYTHON_VERSION: "3.12"
   NODE_VERSION: "20"
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ccf_test"
-  TEST_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ccf_test"
+  DATABASE_URL: "postgresql+psycopg2://postgres:postgres@localhost:5432/ccf_test"
+  TEST_DATABASE_URL: "postgresql+psycopg2://postgres:postgres@localhost:5432/ccf_test"
   # Fuente única de verdad del umbral de cobertura backend (heredero en todos
   # los jobs; debe coincidir con el target `make coverage-gate`). Ya no vive en
   # pytest.ini para que los subconjuntos de tests locales no fallen por
   # cobertura parcial.
   COV_THRESHOLD: "38"
+  COVERAGE_RCFILE: .coveragerc
 
 jobs:
   # ── Quality Gate ─────────────────────────────────────────────
@@ -47,6 +48,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install bandit ruff
+
+      - name: Test CI and release safety contracts
+        run: python -m pytest scripts/tests/ scripts/test_ci_frontend_e2e.py -q -o addopts=''
 
       - name: Lint with Ruff
         # Uses select/ignore/per-file-ignores from pyproject.toml
@@ -85,7 +89,7 @@ jobs:
         #   (>15 min en Postgres serial) baja a ~2-4 min en SQLite paralelo.
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD --ignore-glob='tests/test_crm_*.py'
+          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=0 --ignore-glob='tests/test_crm_*.py'
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -93,24 +97,29 @@ jobs:
           file: ./coverage.xml
           fail_ci_if_error: false
 
-      - name: Check coverage threshold
-        # Fuente única de verdad: COV_THRESHOLD (env del job) — debe coincidir
-        # con `make coverage-gate`. pytest-cov ya falla la corrida si no se
-        # alcanza (--cov-fail-under=$COV_THRESHOLD); este paso lo verifica de
-        # nuevo sobre coverage.xml para un mensaje explícito.
-        run: |
-          THRESHOLD=${COV_THRESHOLD:-38}
-          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree=ET.parse('coverage.xml'); root=tree.getroot(); rate=float(root.get('line-rate')); print(f'{rate*100:.1f}')")
-          echo "Coverage: $COVERAGE% (threshold: $THRESHOLD%)"
-          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-            echo "❌ Coverage below $THRESHOLD% threshold"
-            exit 1
-          fi
+      - name: Preserve backend coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: .coverage
+          include-hidden-files: true
+          if-no-files-found: error
 
   # ── Frontend Quality Gate ────────────────────────────────────
   frontend-quality:
     name: Frontend Quality Gate
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ccf_e2e_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -136,6 +145,9 @@ jobs:
         # being converged.
         run: cd frontend && npm ci --legacy-peer-deps
 
+      - name: Check API rewrite precedence
+        run: node --test frontend/scripts/next-api-rewrites.test.mjs
+
       - name: Lint (ESLint)
         run: cd frontend && npm run lint
 
@@ -143,26 +155,22 @@ jobs:
         run: cd frontend && npx tsc --noEmit
 
       - name: Run unit tests with coverage
-        run: cd frontend && npx vitest run --coverage
-
-      - name: Build
-        run: cd frontend && npm run build
+        run: cd frontend && npx vitest run --coverage --maxWorkers=2 --minWorkers=1
 
       - name: Install Playwright browsers
         run: cd frontend && npx playwright install --with-deps chromium
 
-      - name: Run E2E smoke tests
-        # Playwright managed webServer boots `npm run dev` automatically.
-        # The build step above ensures .next/ exists for the dev server.
-        # BASE_URL is consumed by public-pages.spec.ts (absolute URLs);
-        # PLAYWRIGHT_MANAGED_WEBSERVER enables the managed webServer in config.
-        run: cd frontend && npx playwright test --grep-invert @auth
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install isolated API dependencies
+        run: pip install -r requirements.txt
+      - name: Run E2E smoke tests with a local API and disposable database
+        run: python scripts/run_ci_frontend_e2e.py
         env:
-          API_PROXY_TARGET: https://elfarocc.tech
-          PLAYWRIGHT_MANAGED_WEBSERVER: "1"
-          PLAYWRIGHT_BASE_URL: ""
-          BASE_URL: http://localhost:4173
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/ccf_e2e_ci
+          TEST_DATABASE_URL: postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/ccf_e2e_ci
+          CCF_E2E_DATABASE_CONFIRM: ccf_e2e_ci
 
       - name: Upload frontend coverage
         uses: codecov/codecov-action@v4
@@ -172,17 +180,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Check frontend coverage threshold
-        run: |
-          COVERAGE=$(cd frontend && npx vitest run --coverage --reporter=json 2>/dev/null | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          print(f\"{data.get('total', {}).get('lines', {}).get('pct', 0):.1f}\")
-          " 2>/dev/null || echo "0")
-          echo "Frontend Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 40" | bc -l) )); then
-            echo "❌ Frontend coverage below 40% threshold"
-            exit 1
-          fi
+        run: python scripts/check_coverage_report.py frontend/coverage/coverage-summary.json --format vitest --threshold 40
 
   # ── Database Migrations Check ────────────────────────────────
   migrations-check:
@@ -223,13 +221,14 @@ jobs:
         # recorded as applied, matching scripts/provision_quality_database.py.
         run: |
           alembic upgrade 20260702_0001_canonical_baseline
-          alembic stamp head
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 
-      - name: Verify downgrade works
+      - name: Verify the installed baseline is reversible
+        # Historical revisions are absorbed by the current ORM snapshot, not
+        # executed. Reverse only the baseline that was actually installed.
         run: |
-          alembic downgrade 20260702_0001_canonical_baseline
+          alembic downgrade base
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 
@@ -244,7 +243,20 @@ jobs:
   crm-tests:
     name: CRM Functional Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ccf_test_crm
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
     env:
+      CRM_MIGRATION_DATABASE_URL: postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/ccf_test_crm
+      CRM_MIGRATION_TARGET_DATABASE: ccf_test_crm
       # Mismo enfoque que backend-quality: SQLite en memoria + xdist.
       DATABASE_URL: "sqlite://"
       TEST_DATABASE_URL: "sqlite://"
@@ -267,7 +279,7 @@ jobs:
       - name: Run CRM tests (SQLite + xdist)
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/test_crm_*.py -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD
+          pytest tests/test_crm_*.py -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=0
 
       - name: Upload CRM coverage
         uses: codecov/codecov-action@v4
@@ -276,10 +288,46 @@ jobs:
           flags: crm
           fail_ci_if_error: false
 
+      - name: Preserve CRM coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: crm-coverage
+          path: .coverage
+          include-hidden-files: true
+          if-no-files-found: error
+
+  # Coverage is global across both successful test shards, never per module.
+  backend-coverage:
+    name: Combined Backend Coverage Gate
+    needs: [backend-quality, crm-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install coverage==7.14.1
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-coverage'
+          path: coverage-shards
+      - name: Combine shards and enforce the global threshold
+        run: |
+          mv coverage-shards/backend-coverage/.coverage .coverage.backend
+          mv coverage-shards/crm-coverage/.coverage .coverage.crm
+          python -m coverage combine --keep
+          python -m coverage report --fail-under=$COV_THRESHOLD
+          python -m coverage xml
+      - uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          flags: backend-combined
+          fail_ci_if_error: false
+
   # ── Deploy to Staging ────────────────────────────────────────
   deploy-staging:
     name: Deploy to Staging
-    needs: [backend-quality, frontend-quality, migrations-check, crm-tests]
+    needs: [backend-quality, frontend-quality, migrations-check, crm-tests, backend-coverage]
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     environment: staging
@@ -295,7 +343,7 @@ jobs:
   # ── Deploy to Production ─────────────────────────────────────
   deploy-production:
     name: Deploy to Production
-    needs: [backend-quality, frontend-quality, migrations-check, crm-tests]
+    needs: [backend-quality, frontend-quality, migrations-check, crm-tests, backend-coverage]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
