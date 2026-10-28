@@ -36,7 +36,7 @@ def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
     # con datos insuficientes (BAC=0, AC=0, sin cronograma, tareas sin fecha) se
     # REPORTAN como categoría 'sin_datos' con su motivo (decisión de producto:
     # los proyectos sin presupuesto definido se listan como pendientes, nunca
-    # ocultos); los valores legacy de CPI/SPI placeholder se conservan en la
+    # ocultos); los valores heredados de CPI/SPI placeholder se conservan en la
     # matriz por compatibilidad, marcados con *_available=False.
     quadrants = {
         "q1_optimal": 0,
