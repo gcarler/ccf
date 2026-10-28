@@ -129,7 +129,7 @@ export interface ProjectEarlyWarningSentinel {
   recommended_action?: string;
   action?: string;
   color?: string;
-  severity_color?: 'success' | 'warning' | 'destructive';
+  severity_color?: 'success' | 'warning' | 'destructive' | 'neutral';
   is_recoverable_without_ccb?: boolean;
   requires_ccb?: boolean;
   requires_pmo_audit?: boolean;
@@ -921,7 +921,9 @@ export type ProjectPortfolioQuadrant =
   | "q1_optimal"
   | "q2_cost_acceleration"
   | "q3_underutilized_capacity"
-  | "q4_critical_emergency";
+  | "q4_critical_emergency"
+  // TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: CPI/SPI no medibles (sin datos)
+  | "sin_datos";
 
 export interface PMOPortfolioProject {
   project_id: string;
@@ -938,6 +940,11 @@ export interface PMOPortfolioProject {
   quadrant: ProjectPortfolioQuadrant;
   progress_pct: number;
   charter_status: "draft" | "authorized";
+  cpi_available?: boolean;
+  spi_available?: boolean;
+  data_quality?: string[];
+  data_quality_labels?: string[];
+  primary_data_quality_issue?: string | null;
 }
 
 export interface PMOPortfolioMatrixResponse {
@@ -949,9 +956,12 @@ export interface PMOPortfolioMatrixResponse {
     portfolio_cpi: number;
     portfolio_spi: number;
     portfolio_csi: number;
+    portfolio_cpi_available?: boolean;
+    portfolio_spi_available?: boolean;
   };
   quadrants_distribution: Record<ProjectPortfolioQuadrant, number>;
   projects_matrix: PMOPortfolioProject[];
+  sin_datos_projects?: PMOPortfolioProject[];
 }
 
 export interface ProjectSubmodulesSummary {
@@ -1333,6 +1343,13 @@ export interface ProjectEVMMetrics {
   financial_percentage: number;
   cpi: number;
   spi: number;
+  // TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: los placeholders legacy conservan
+  // su valor, pero el consumidor NO debe presentarlos como medibles.
+  cpi_available?: boolean;
+  spi_available?: boolean;
+  eac_available?: boolean;
+  data_quality?: string[];
+  primary_data_quality_issue?: string | null;
   cv: number;
   sv: number;
   cr: number;
@@ -1348,7 +1365,7 @@ export interface ProjectEVMMetrics {
   cpi_stability_rule?: ProjectCPIStabilityRule | null;
   early_warning_sentinel?: ProjectEarlyWarningSentinel | null;
   health_status: string;
-  health_color: 'success' | 'warning' | 'destructive';
+  health_color: 'success' | 'warning' | 'destructive' | 'neutral';
   recommendations: string[];
 }
 

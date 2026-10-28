@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectEVMMetrics, ProjectCurveSPoint, ProjectCurveSResponse, ProjectExecutionMatrix } from '@/types/projects';
+import { formatIndexOrNd, describeDataQuality } from '@/lib/projectDataQuality';
 import {
     Activity,
     AlertTriangle,
@@ -143,8 +144,23 @@ export function ProjectEVMDrawer({
         };
     }, [curveData, evmData?.bac, evmData?.baseline_bac]);
 
-    // Badges de CPI y SPI
-    const getPerformanceBadge = (indexVal: number, type: 'cpi' | 'spi') => {
+    // Badges de CPI y SPI (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: índices no medibles → 'n/d' + motivo)
+    const getPerformanceBadge = (
+        indexVal: number,
+        type: 'cpi' | 'spi',
+        available: boolean | undefined,
+        reasons: string[] | undefined,
+    ) => {
+        const display = formatIndexOrNd(indexVal, available, reasons);
+
+        if (display.unavailable) {
+            return {
+                label: 'No disponible',
+                colorClass: 'bg-[hsl(var(--muted)/0.15)] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]',
+                display,
+            };
+        }
+
         const isGood = indexVal >= 1.0;
         const isWarning = indexVal >= 0.85 && indexVal < 1.0;
 
@@ -158,8 +174,15 @@ export function ProjectEVMDrawer({
             ? 'bg-[hsl(var(--warning)/0.12)] border-[hsl(var(--warning)/0.35)] text-[hsl(var(--warning))]'
             : 'bg-[hsl(var(--destructive)/0.12)] border-[hsl(var(--destructive)/0.35)] text-[hsl(var(--destructive))]';
 
-        return { label, colorClass };
+        return { label, colorClass, display };
     };
+
+    // Presentación una sola vez (null-safe: evmData puede ser null en la carga inicial)
+    const cpiBadge = getPerformanceBadge(evmData?.cpi ?? 0, 'cpi', evmData?.cpi_available, evmData?.data_quality);
+    const spiBadge = getPerformanceBadge(evmData?.spi ?? 0, 'spi', evmData?.spi_available, evmData?.data_quality);
+    // La disponibilidad de EAC gobierna también VAC (VAC = BAC − EAC deriva del mismo pronóstico)
+    const eacDisplay = formatIndexOrNd(evmData?.eac ?? 0, evmData?.eac_available, evmData?.data_quality);
+    const vacDisplay = formatIndexOrNd(evmData?.vac ?? 0, evmData?.eac_available, evmData?.data_quality);
 
     return (
         <>
@@ -300,7 +323,8 @@ export function ProjectEVMDrawer({
                                 "rounded-xl border p-4.5 space-y-3 transition-colors",
                                 evmData.health_color === 'success' && "bg-[hsl(var(--success)/0.08)] border-[hsl(var(--success)/0.35)]",
                                 evmData.health_color === 'warning' && "bg-[hsl(var(--warning)/0.08)] border-[hsl(var(--warning)/0.35)]",
-                                evmData.health_color === 'destructive' && "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.35)]"
+                                evmData.health_color === 'destructive' && "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.35)]",
+                                evmData.health_color === 'neutral' && "bg-[hsl(var(--muted)/0.12)] border-[hsl(var(--border))]"
                             )}
                         >
                             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -313,6 +337,9 @@ export function ProjectEVMDrawer({
                                     )}
                                     {evmData.health_color === 'destructive' && (
                                         <ShieldAlert size={20} className="text-[hsl(var(--destructive))]" />
+                                    )}
+                                    {evmData.health_color === 'neutral' && (
+                                        <Info size={20} className="text-[hsl(var(--muted-foreground))]" />
                                     )}
                                     <div>
                                         <h3 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
@@ -381,6 +408,21 @@ export function ProjectEVMDrawer({
                             </div>
                         </div>
 
+                        {/* 1b. Banner de Calidad de Datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01) */}
+                        {evmData.data_quality && evmData.data_quality.length > 0 && (
+                            <div className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.15)] flex items-start gap-2">
+                                <Info size={16} className="text-[hsl(var(--muted-foreground))] shrink-0 mt-0.5" />
+                                <div className="space-y-0.5 min-w-0">
+                                    <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] block">
+                                        Indicadores no disponibles
+                                    </span>
+                                    <span className="text-xs text-[hsl(var(--muted-foreground))] block">
+                                        {evmData.data_quality.map((code) => describeDataQuality(code)).join(' · ')}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* 2. Cuadrícula de Indicadores Nucleares (CPI, SPI, CV, SV) */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {/* CPI */}
@@ -389,16 +431,28 @@ export function ProjectEVMDrawer({
                                     CPI (Costo)
                                     <span className={clsx(
                                         "px-1.5 py-0.5 rounded text-2xs font-extrabold",
-                                        getPerformanceBadge(evmData.cpi, 'cpi').colorClass
+                                        cpiBadge.colorClass
                                     )}>
-                                        {evmData.cpi >= 1.0 ? '≥ 1.0' : '< 1.0'}
+                                        {cpiBadge.display.unavailable ? 'n/d' : (evmData.cpi >= 1.0 ? '≥ 1.0' : '< 1.0')}
                                     </span>
                                 </span>
-                                <div className="text-xl font-extrabold text-[hsl(var(--foreground))]">
-                                    {evmData.cpi.toFixed(2)}
+                                <div className={clsx(
+                                    "text-xl font-extrabold",
+                                    cpiBadge.display.unavailable
+                                        ? "text-[hsl(var(--muted-foreground))]"
+                                        : "text-[hsl(var(--foreground))]"
+                                )}>
+                                    {cpiBadge.display.text}
                                 </div>
-                                <span className="text-2xs text-[hsl(var(--muted-foreground))] block truncate" title="Fórmula: EV / AC">
-                                    {getPerformanceBadge(evmData.cpi, 'cpi').label}
+                                <span
+                                    className="text-2xs text-[hsl(var(--muted-foreground))] block truncate"
+                                    title={cpiBadge.display.unavailable
+                                        ? cpiBadge.display.reasons.join(' · ')
+                                        : 'Fórmula: EV / AC'}
+                                >
+                                    {cpiBadge.display.unavailable
+                                        ? (cpiBadge.display.reasons[0] ?? cpiBadge.label)
+                                        : cpiBadge.label}
                                 </span>
                             </div>
 
@@ -408,16 +462,28 @@ export function ProjectEVMDrawer({
                                     SPI (Tiempo)
                                     <span className={clsx(
                                         "px-1.5 py-0.5 rounded text-2xs font-extrabold",
-                                        getPerformanceBadge(evmData.spi, 'spi').colorClass
+                                        spiBadge.colorClass
                                     )}>
-                                        {evmData.spi >= 1.0 ? '≥ 1.0' : '< 1.0'}
+                                        {spiBadge.display.unavailable ? 'n/d' : (evmData.spi >= 1.0 ? '≥ 1.0' : '< 1.0')}
                                     </span>
                                 </span>
-                                <div className="text-xl font-extrabold text-[hsl(var(--foreground))]">
-                                    {evmData.spi.toFixed(2)}
+                                <div className={clsx(
+                                    "text-xl font-extrabold",
+                                    spiBadge.display.unavailable
+                                        ? "text-[hsl(var(--muted-foreground))]"
+                                        : "text-[hsl(var(--foreground))]"
+                                )}>
+                                    {spiBadge.display.text}
                                 </div>
-                                <span className="text-2xs text-[hsl(var(--muted-foreground))] block truncate" title="Fórmula: EV / PV">
-                                    {getPerformanceBadge(evmData.spi, 'spi').label}
+                                <span
+                                    className="text-2xs text-[hsl(var(--muted-foreground))] block truncate"
+                                    title={spiBadge.display.unavailable
+                                        ? spiBadge.display.reasons.join(' · ')
+                                        : 'Fórmula: EV / PV'}
+                                >
+                                    {spiBadge.display.unavailable
+                                        ? (spiBadge.display.reasons[0] ?? spiBadge.label)
+                                        : spiBadge.label}
                                 </span>
                             </div>
 
@@ -744,30 +810,62 @@ export function ProjectEVMDrawer({
                                     <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
                                         Costo Final Estimado (EAC)
                                     </span>
-                                    <div className={clsx(
-                                        "text-base font-extrabold mt-0.5",
-                                        evmData.eac > evmData.bac ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--success))]"
-                                    )}>
-                                        ${evmData.eac.toLocaleString('es-CO')}
-                                    </div>
-                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
-                                        {evmData.eac > evmData.bac ? "Requiere ampliación presupuestal" : "Proyectado dentro del límite"}
-                                    </span>
+                                    {eacDisplay.unavailable ? (
+                                        <>
+                                            <div className="text-base font-extrabold mt-0.5 text-[hsl(var(--muted-foreground))]">
+                                                {eacDisplay.text}
+                                            </div>
+                                            <span
+                                                className="text-2xs text-[hsl(var(--muted-foreground))] block truncate"
+                                                title={eacDisplay.reasons.join(' · ')}
+                                            >
+                                                {eacDisplay.reasons[0] ?? 'No disponible'}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className={clsx(
+                                                "text-base font-extrabold mt-0.5",
+                                                evmData.eac > evmData.bac ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--success))]"
+                                            )}>
+                                                ${evmData.eac.toLocaleString('es-CO')}
+                                            </div>
+                                            <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                                {evmData.eac > evmData.bac ? "Requiere ampliación presupuestal" : "Proyectado dentro del límite"}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                     <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
                                         Variación al Cierre (VAC)
                                     </span>
-                                    <div className={clsx(
-                                        "text-base font-extrabold mt-0.5",
-                                        evmData.vac >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
-                                    )}>
-                                        {evmData.vac >= 0 ? `+$${evmData.vac.toLocaleString('es-CO')}` : `-$${Math.abs(evmData.vac).toLocaleString('es-CO')}`}
-                                    </div>
-                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
-                                        {evmData.vac >= 0 ? "Ahorro neto previsto al finalizar" : "Déficit total proyectado al finalizar"}
-                                    </span>
+                                    {vacDisplay.unavailable ? (
+                                        <>
+                                            <div className="text-base font-extrabold mt-0.5 text-[hsl(var(--muted-foreground))]">
+                                                {vacDisplay.text}
+                                            </div>
+                                            <span
+                                                className="text-2xs text-[hsl(var(--muted-foreground))] block truncate"
+                                                title={vacDisplay.reasons.join(' · ')}
+                                            >
+                                                {vacDisplay.reasons[0] ?? 'No disponible'}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className={clsx(
+                                                "text-base font-extrabold mt-0.5",
+                                                evmData.vac >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
+                                            )}>
+                                                {evmData.vac >= 0 ? `+$${evmData.vac.toLocaleString('es-CO')}` : `-$${Math.abs(evmData.vac).toLocaleString('es-CO')}`}
+                                            </div>
+                                            <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                                                {evmData.vac >= 0 ? "Ahorro neto previsto al finalizar" : "Déficit total proyectado al finalizar"}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -789,6 +887,7 @@ export function ProjectEVMDrawer({
                                             "px-2.5 py-0.5 rounded-full text-2xs font-bold border",
                                             evmData.early_warning_sentinel.level === 'normal' && "bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]",
                                             evmData.early_warning_sentinel.level === 'attention' && "bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]",
+                                            evmData.early_warning_sentinel.level === 'no_data' && "bg-[hsl(var(--muted)/0.15)] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]",
                                             (evmData.early_warning_sentinel.level === 'high_risk' || evmData.early_warning_sentinel.level === 'critical') &&
                                                 "bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)]"
                                         )}
