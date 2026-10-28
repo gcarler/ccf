@@ -68,6 +68,7 @@ def notify(
     dedupe_key: str | None = None,
     channels: Iterable[str] = ("in_app", "email"),
     email_context: dict[str, Any] | None = None,
+    commit: bool = True,
 ) -> dict[str, Any]:
     """Notifica un evento a una lista de usuarios según sus preferencias.
 
@@ -75,6 +76,7 @@ def notify(
         user_ids: personas destino (kernel de personas, Axioma 1).
         event_type: clave canónica (task_assigned, mention,...) que mapea a
             NotificationPreference.event_type.
+        commit: si es False, el caller conserva el control de la transacción.
         email_context: datos para renderizar el email (plantilla + kwargs);
             el worker los consume. Si es None, se genera un email simple
             título + contenido.
@@ -156,7 +158,8 @@ def notify(
             )
             stats["emails_queued"] += 1
 
-    db.commit()
+    if commit:
+        db.commit()
     return stats
 
 
@@ -244,7 +247,7 @@ def deliver_pending(
             from backend.core.config import get_settings
             frontend_url = get_settings().frontend_url
         except Exception:
-            pass
+            log.debug("Best-effort deliver_pending failed; retaining fallback")
         base = (frontend_url or "").rstrip("/")
         link = (notif.target_url or "") if notif else ""
         if link and base and not link.startswith("http"):

@@ -129,10 +129,13 @@ def test_messaging_websocket_rejects_unauthorized_private_room(db_session):
     assert exc_info.value.code == 4003
 
 
+@pytest.mark.parametrize("runtime_layout", ["default", "runtime_override"])
 def test_authenticated_attachment_download_allows_participant_and_denies_unauthorized_users(
     client,
     db_session,
     tmp_path: Path,
+    monkeypatch,
+    runtime_layout,
 ):
     user_a, _, sede_a = seed_admin(db_session, email="attachment-owner-gap@example.com")
     user_b, _, sede_b = seed_admin(db_session, email="attachment-foreign-gap@example.com")
@@ -160,8 +163,14 @@ def test_authenticated_attachment_download_allows_participant_and_denies_unautho
         permisos={"messaging:read": "allow"},
     )
 
-    source_dir = tmp_path / "module" / "api"
-    attachment_dir = tmp_path / "static" / "chat_attachments" / str(sede_a.id)
+    source_root = tmp_path / "source"
+    runtime_root = tmp_path / "runtime" if runtime_layout == "runtime_override" else source_root
+    source_dir = source_root / "backend" / "api"
+    attachment_dir = runtime_root / "static" / "chat_attachments" / str(sede_a.id)
+    if runtime_layout == "runtime_override":
+        monkeypatch.setenv("CCF_RUNTIME_DIR", str(runtime_root))
+    else:
+        monkeypatch.delenv("CCF_RUNTIME_DIR", raising=False)
     source_dir.mkdir(parents=True)
     attachment_dir.mkdir(parents=True)
     attachment_path = attachment_dir / "secure.pdf"

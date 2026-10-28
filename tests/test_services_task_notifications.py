@@ -2,12 +2,21 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from backend import models
 from backend.services.task_notifications import (
     _display_name,
     _format_due_date,
     notify_task_assigned,
 )
+
+
+@pytest.fixture(autouse=True)
+def notification_hub_spy():
+    # Isolate the legacy SMTP path while enforcing the real hub signature.
+    with patch("backend.services.notification_hub.notify", autospec=True) as notify:
+        yield notify
 
 
 class DummyPersona:
@@ -115,7 +124,7 @@ def test_notify_task_assigned_no_email():
 
 @patch("backend.services.task_notifications.render_task_assignment_email")
 @patch("backend.services.task_notifications.email_svc.send_email")
-def test_notify_task_assigned_email_sent_new_notif(mock_send_email, mock_render_email):
+def test_notify_task_assigned_email_sent_new_notif(mock_send_email, mock_render_email, notification_hub_spy):
     db = MagicMock()
     assignee_id = uuid.uuid4()
     user_id = uuid.uuid4()
@@ -153,6 +162,9 @@ def test_notify_task_assigned_email_sent_new_notif(mock_send_email, mock_render_
     db.commit.assert_called_once()
     # Staged: ProjectActivityLog, CommunicationLog, NotificacionUsuario
     assert db.add.call_count == 3
+    notification_hub_spy.assert_called_once()
+    assert notification_hub_spy.call_args.kwargs["db"] is db
+    assert notification_hub_spy.call_args.kwargs["commit"] is False
 
 
 @patch("backend.services.task_notifications.render_task_assignment_email")
@@ -198,7 +210,7 @@ def test_notify_task_assigned_email_sent_existing_notif(mock_send_email, mock_re
 
 @patch("backend.services.task_notifications.render_task_assignment_email")
 @patch("backend.services.task_notifications.email_svc.send_email")
-def test_notify_task_assigned_email_failed(mock_send_email, mock_render_email):
+def test_notify_task_assigned_email_failed(mock_send_email, mock_render_email, notification_hub_spy):
     db = MagicMock()
     assignee_id = uuid.uuid4()
     task = DummyTask(id_val=105, assignee_id=assignee_id)
@@ -225,6 +237,7 @@ def test_notify_task_assigned_email_failed(mock_send_email, mock_render_email):
     db.commit.assert_called_once()
     # Staged: ProjectActivityLog, CommunicationLog (NO NotificacionUsuario because email failed)
     assert db.add.call_count == 2
+    notification_hub_spy.assert_not_called()
 
 
 def test_notify_task_assigned_exception_rollback():
