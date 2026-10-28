@@ -200,3 +200,29 @@ def test_suppress_pending_marks_read(db_session):
     db_session.refresh(delivery)
     assert delivery.status == "suppressed"
     assert delivery.read_before_send is True
+
+
+def test_notify_can_join_callers_transaction(db_session):
+    """A delivery queued for assignment must disappear if its caller rolls back."""
+    from unittest.mock import patch
+
+    from backend.models_auth import NotificacionUsuario
+    from backend.models_notifications import NotificationDelivery
+    from backend.services.notification_hub import notify
+
+    _, persona, _ = _mk_admin(db_session)
+    user_id = persona.id
+    with patch.object(db_session, "commit", wraps=db_session.commit) as commit:
+        stats = notify(
+            db_session, [user_id], event_type="task_assigned",
+            title="Atomic assignment", content="Details", commit=False,
+        )
+        assert stats["created"] == 1
+        assert stats["emails_queued"] == 1
+        commit.assert_not_called()
+        db_session.flush()
+        assert db_session.query(NotificacionUsuario).filter_by(title="Atomic assignment").count() == 1
+        assert db_session.query(NotificationDelivery).filter_by(user_id=user_id).count() == 1
+        db_session.rollback()
+        assert db_session.query(NotificacionUsuario).filter_by(title="Atomic assignment").count() == 0
+        assert db_session.query(NotificationDelivery).filter_by(user_id=user_id).count() == 0

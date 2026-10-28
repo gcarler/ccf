@@ -268,14 +268,34 @@ def ownership_violations(branch: str, files: list[str]) -> list[str]:
     return [path for path in files if not _matches(path, allowed)]
 
 
-def changed_files(base: str, head: str) -> list[str]:
+def _diff_paths(base: str, head: str) -> list[str]:
     result = subprocess.run(
-        ["git", "diff", "--diff-filter=ACMRTUXB", "--name-only", f"{base}...{head}"],
+        ["git", "diff", "--no-renames", "--diff-filter=ACDMRTUXB", "--name-only", f"{base}...{head}"],
         check=True,
         capture_output=True,
         text=True,
     )
     return [line for line in result.stdout.splitlines() if line]
+
+
+def changed_files(base: str, head: str) -> list[str]:
+    """Validate push changes without attributing reviewed main commits to owners.
+
+    Quality checks still use the real remote push base. Ownership intersects
+    that delta with the branch's delta from canonical main, so syncing main
+    neither imports foreign ownership nor exempts new foreign changes.
+    """
+    candidates = _diff_paths(base, head)
+    canonical = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", "refs/remotes/origin/main^{commit}"],
+        capture_output=True,
+        text=True,
+    )
+    if canonical.returncode != 0:
+        # Without canonical evidence, preserve the original strict check.
+        return candidates
+    branch_changes = set(_diff_paths("refs/remotes/origin/main", head))
+    return [path for path in candidates if path in branch_changes]
 
 
 def main() -> int:

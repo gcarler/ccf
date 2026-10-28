@@ -1214,7 +1214,8 @@ def download_chat_attachment(
     if message is None:
         raise HTTPException(status_code=404, detail="Attachment not found")
 
-    uploads_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments"))
+    runtime_root = os.getenv("CCF_RUNTIME_DIR", os.path.join(os.path.dirname(__file__), "..", ".."))
+    uploads_root = os.path.normpath(os.path.join(runtime_root, "static", "chat_attachments"))
     filepath = os.path.normpath(os.path.join(uploads_root, sede_bucket, filename))
     if not filepath.startswith(uploads_root + os.sep) or not os.path.isfile(filepath):
         raise HTTPException(status_code=404, detail="Attachment not found")
@@ -1324,7 +1325,8 @@ async def upload_chat_attachment(
     actor_sede = get_user_sede_id(db, current_user.id)
     sede_bucket = str(actor_sede) if actor_sede is not None else "_global"
 
-    uploads_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments"))
+    runtime_root = os.getenv("CCF_RUNTIME_DIR", os.path.join(os.path.dirname(__file__), "..", ".."))
+    uploads_root = os.path.normpath(os.path.join(runtime_root, "static", "chat_attachments"))
     upload_dir = os.path.normpath(os.path.join(uploads_root, sede_bucket))
     os.makedirs(upload_dir, exist_ok=True)
 
