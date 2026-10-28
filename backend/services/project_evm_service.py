@@ -104,6 +104,23 @@ def _safe_float(val: Any, default: float = 0.0) -> float:
     return default
 
 
+# Códigos canónicos de calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
+# Orden de prioridad para el motivo principal cuando concurren varios.
+DATA_QUALITY_CODES = (
+    "sin_presupuesto",
+    "sin_gastos",
+    "sin_cronograma",
+    "tareas_sin_fecha",
+)
+
+DATA_QUALITY_LABELS = {
+    "sin_presupuesto": "Sin presupuesto definido (BAC = 0)",
+    "sin_gastos": "Sin gastos registrados (AC = 0)",
+    "sin_cronograma": "Sin cronograma (sin fechas de inicio/fin válidas)",
+    "tareas_sin_fecha": "Tareas sin fecha límite (PV no computable)",
+}
+
+
 def _is_valid_id(val: Any) -> bool:
     return isinstance(val, (str, uuid.UUID)) and bool(str(val).strip())
 
@@ -325,10 +342,46 @@ def calculate_cpi_stability_rule(progress_pct: float, cpi: float) -> Dict[str, A
     }
 
 
-def calculate_early_warning_sentinel(cpi: float, spi: float) -> Dict[str, Any]:
-    """Clasifica el nivel de Alerta Temprana (Sentinel) en los 4 umbrales de PMI Vol. 5 §4 según min(CPI, SPI)."""
+def calculate_early_warning_sentinel(
+    cpi: float,
+    spi: float,
+    cpi_available: bool = True,
+    spi_available: bool = True,
+) -> Dict[str, Any]:
+    """Clasifica el nivel de Alerta Temprana (Sentinel) en los 4 umbrales de PMI Vol. 5 §4 según min(CPI, SPI).
+
+    TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: si el CPI o el SPI no son medibles
+    (placeholders por AC=0/PV=0/BAC=0), el Sentinel no inventa un nivel de
+    riesgo: reporta ``no_data`` con la acción de completar datos, conservando
+    el resto de la respuesta para no romper el contrato.
+    """
     curr_cpi = round(float(cpi), 2)
     curr_spi = round(float(spi), 2)
+
+    if not (cpi_available and spi_available):
+        nivel_label = "Sin datos suficientes"
+        protocol_action = (
+            "Completar datos de EVM (presupuesto, gastos o cronograma) "
+            "antes de clasificar desempeño; no hay alerta de riesgo evaluable."
+        )
+        return {
+            "level": "no_data",
+            "status": "no_data",
+            "label": nivel_label,
+            "min_index": None,
+            "cpi": curr_cpi,
+            "spi": curr_spi,
+            "cpi_available": bool(cpi_available),
+            "spi_available": bool(spi_available),
+            "limiting_metric": None,
+            "threshold_range": "requiere CPI y SPI medibles (AC>0 y PV>0 con BAC>0)",
+            "protocol_action": protocol_action,
+            "action": protocol_action,
+            "severity_color": "neutral",
+            "requires_ccb": False,
+            "requires_pmo_audit": False,
+        }
+
     min_index = round(min(curr_cpi, curr_spi), 2)
     limiting_metric = "CPI" if curr_cpi <= curr_spi else "SPI"
 
@@ -616,22 +669,86 @@ def calculate_project_evm(
     cr = round(cpi * spi, 2)
 
     # 9. Estimación y Variación a la Conclusión (EAC y VAC)
-    # Display precision must not erase a small, measured cost index.
-    # A forecast cannot be less than the cost already incurred.
-    if raw_cpi > 0:
+    #    Del hallazgo C2 (auditoría agy 2026-10-28): con gasto real (AC>0) y avance
+    #    físico nulo monetizado (EV=0), el CPI real es 0 y la fórmula PMI aplicable
+    #    es EAC = AC + (BAC - EV): todo lo gastado ya es sobrecosto terminal y el
+    #    saldo del BAC se ejecuta a CPI=1 implícito. La fórmula heredada EAC=BAC ocultaba el
+    #    sobrecosto ya incurrido. Sin gasto (AC=0) ni avance (EV=0) se mantiene el
+    #    eco del BAC (placeholder señalado por eac_available=False).
+    # Calidad de datos primero: spi_available debe coincidir con data_quality.
+    # Con sin_cronograma el fallback pv = ev solo crea un PV placeholder.
+    has_valid_schedule = bool(target_dt and target_dt > start_dt)
+    tasks_with_due = sum(1 for t in tasks if _as_utc(t.due_date) is not None)
+
+    data_quality: List[str] = []
+    if bac <= 0.0:
+        data_quality.append("sin_presupuesto")
+    if ac <= 0.0:
+        data_quality.append("sin_gastos")
+    if total_tasks == 0 and not has_valid_schedule:
+        data_quality.append("sin_cronograma")
+    if total_tasks > 0 and tasks_with_due == 0:
+        data_quality.append("tareas_sin_fecha")
+    data_quality = [code for code in DATA_QUALITY_CODES if code in data_quality]
+    primary_data_quality_issue: Optional[str] = data_quality[0] if data_quality else None
+
+    cpi_available = bool(bac > 0.0 and ac > 0.0)
+    # SPI medible requiere presupuesto, PV computable Y cronograma válido.
+    # (audit rev 1, hallazgo 2: sin_cronograma => spi_available False)
+    spi_available = bool(bac > 0.0 and pv > 0.0 and "sin_cronograma" not in data_quality)
+
+    if ac > 0.0 and ev == 0.0:
+        eac = round(max(0.0, ac) + max(0.0, bac - ev), 2)
+    elif raw_cpi > 0:
+        # Preserve measured precision and never forecast below incurred AC.
         eac = round(max(ac, bac / raw_cpi), 2)
     else:
         eac = max(ac, bac)
     vac = round(bac - eac, 2)
 
+    # 9b. Disponibilidad de indicadores y calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
+    #     Valores heredados (cpi/spi/eac de la cápsula anterior) se mantienen intactos para no romper el
+    #     contrato; los flags indican al consumidor cuáles NO son medibles y no deben
+    #     presentarse como reales:
+    #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
+    #       1.0/2.0 de AC=0 es inventado, no medible. Con AC>0 y EV=0 el CPI=0 es
+    #       real y medible.
+    #     - SPI requiere valor planificado positivo (PV>0) Y cronograma válido:
+    #       con sin_cronograma el placeholder pv = ev no mide cronograma.
+    #     - EAC es estimación solo con CPI real (o con la fórmula C2); sin CPI, el
+    #       eco del BAC no es un pronóstico.
+    #     Motivos prioritarios (calculados antes, sección 9): sin_presupuesto
+    #     (BAC<=0) domina sobre los demás.
+    eac_available = bool(bac > 0.0 and cpi_available)
+
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
 
     # 10. Diagnóstico, Semáforo, Regla del 15% de Estabilidad CPI y Early Warning Sentinel
     cpi_stability_rule = calculate_cpi_stability_rule(progress_pct=progress_pct, cpi=cpi)
-    early_warning_sentinel = calculate_early_warning_sentinel(cpi=cpi, spi=spi)
+    early_warning_sentinel = calculate_early_warning_sentinel(
+        cpi=cpi,
+        spi=spi,
+        cpi_available=cpi_available,
+        spi_available=spi_available,
+    )
 
     recommendations: List[str] = []
-    if cpi >= 1.0 and spi >= 1.0:
+    if not (cpi_available and spi_available):
+        # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: sin datos medibles el semáforo
+        # no inventa un cuadrante óptimo/crítico; reporta la causa de forma
+        # accionable (los motivos ya salen en data_quality / motivo principal).
+        health_status = "SIN_DATOS"
+        health_color = "neutral"
+        motivo_labels = [
+            DATA_QUALITY_LABELS.get(code, code) for code in data_quality
+        ] or ["Datos de EVM incompletos (presupuesto, gastos o cronograma)."]
+        recommendations.append(
+            "El desempeño no es evaluable con los datos actuales del proyecto "
+            "(" + "; ".join(motivo_labels) + "). Complete los datos pendientes "
+            "para activar el control de valor ganado."
+        )
+        recommendations.append(early_warning_sentinel["protocol_action"])
+    elif cpi >= 1.0 and spi >= 1.0:
         health_status = "OPTIMO"
         health_color = "success"
         recommendations.append("El proyecto avanza según el cronograma y dentro del presupuesto aprobado.")
@@ -710,6 +827,11 @@ def calculate_project_evm(
         "financial_percentage": financial_pct,
         "cpi": cpi,
         "spi": spi,
+        "cpi_available": cpi_available,
+        "spi_available": spi_available,
+        "eac_available": eac_available,
+        "data_quality": data_quality,
+        "primary_data_quality_issue": primary_data_quality_issue,
         "cv": cv,
         "sv": sv,
         "cr": cr,
@@ -4440,7 +4562,7 @@ def evaluate_control_account_variance_masking(
     }
 
 
-_LEGACY_ES_UNSET = object()
+_ES_UNSET = object()
 
 
 def evaluate_earned_schedule_performance(
@@ -4448,11 +4570,11 @@ def evaluate_earned_schedule_performance(
     actual_time_periods: float = 0.0,
     cumulative_pv_curve: list[float] | None = None,
     *,
-    planned_value_curve: Any = _LEGACY_ES_UNSET,
+    planned_value_curve: Any = _ES_UNSET,
     planned_duration_periods: Optional[float] = None,
 ) -> dict[str, Any]:
     """Evalúa el Cronograma Ganado (Earned Schedule - ES), SPI(t) y SV(t) proyectando EV sobre la curva acumulada de PV según PMI Practice Standard for EVM y PMBOK §7.4."""
-    if planned_value_curve is not _LEGACY_ES_UNSET:
+    if planned_value_curve is not _ES_UNSET:
         curve: List[float] = []
         if isinstance(planned_value_curve, list):
             for val in planned_value_curve:

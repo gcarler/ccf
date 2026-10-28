@@ -189,6 +189,8 @@ describe("ProjectChangeControlDrawer", () => {
     });
     renderDrawer();
 
+    await screen.findByTestId("cr-card-cr-1");
+    await screen.findByTestId("cr-card-cr-2");
     const list = await screen.findByTestId("cr-list");
     expect(list).toBeInTheDocument();
     expect(list.innerHTML).not.toMatch(/--(?:foreground|muted-foreground)\b/);
