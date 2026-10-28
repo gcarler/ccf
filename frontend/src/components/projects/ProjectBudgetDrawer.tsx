@@ -65,6 +65,13 @@ const STATUS_CONFIG = {
     border: "hsl(var(--warning) / 0.3)",
     icon: TrendingDown,
   },
+  approved: {
+    label: "Aprobado (Orden)",
+    color: "hsl(var(--warning-text))",
+    bg: "hsl(var(--warning) / 0.12)",
+    border: "hsl(var(--warning) / 0.3)",
+    icon: CheckSquare,
+  },
   paid: {
     label: "Pagado",
     color: "hsl(var(--success-text))",
@@ -108,7 +115,7 @@ export function ProjectBudgetDrawer({
     amount: number;
     date: string;
     receipt_url: string;
-    status: "planned" | "committed" | "paid";
+    status: "planned" | "committed" | "approved" | "paid";
     component_id: string;
     task_id: string;
   }>({
@@ -258,7 +265,7 @@ export function ProjectBudgetDrawer({
     });
   };
 
-  const handleStatusChange = async (expenseId: string, newStatus: "planned" | "committed" | "paid") => {
+  const handleStatusChange = async (expenseId: string, newStatus: "planned" | "committed" | "approved" | "paid") => {
     try {
       await apiFetch(`/projects/${projectId}/expenses/${expenseId}`, {
         method: "PATCH",
@@ -607,7 +614,7 @@ export function ProjectBudgetDrawer({
                   id={`${fieldId}-status`}
                   value={formData.status}
                   onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value as "planned" | "committed" | "paid" })
+                    setFormData({ ...formData, status: e.target.value as "planned" | "committed" | "approved" | "paid" })
                   }
                   className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
                   style={{
@@ -618,6 +625,7 @@ export function ProjectBudgetDrawer({
                 >
                   <option value="planned">Planificado</option>
                   <option value="committed">Comprometido</option>
+                  <option value="approved">Aprobado (Orden)</option>
                   <option value="paid">Pagado / Desembolsado</option>
                 </select>
               </div>
@@ -782,6 +790,7 @@ export function ProjectBudgetDrawer({
               <option value="all">Todos</option>
               <option value="planned">Planificados</option>
               <option value="committed">Comprometidos</option>
+              <option value="approved">Aprobados (Orden)</option>
               <option value="paid">Pagados</option>
             </select>
           </div>

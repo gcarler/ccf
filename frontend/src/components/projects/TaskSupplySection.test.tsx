@@ -192,7 +192,7 @@ describe('TaskSupplySection', () => {
   it('shows PMI procurement stages, physical and AC percentages, and package budget overrun', async () => {
     const procurementSupplies: TaskSupplyRecord[] = [
       { id: 's-pending', task_id: 't1', item_name: 'Pendiente', quantity: 1, unit_cost: 100, total_cost: 100, status: 'pending' },
-      { id: 's-ordered', task_id: 't1', item_name: 'Ordenado', quantity: 1, unit_cost: 300, total_cost: 300, status: 'ordered' },
+      { id: 's-ordered', task_id: 't1', item_name: 'Ordenado', quantity: 1, unit_cost: 300, total_cost: 300, status: 'purchased' },
       { id: 's-received', task_id: 't1', item_name: 'Recibido', quantity: 1, unit_cost: 400, total_cost: 400, status: 'received' },
       { id: 's-imputed', task_id: 't1', item_name: 'Imputado', quantity: 1, unit_cost: 200, total_cost: 200, status: 'purchased', linked_expense_id: 'exp-200' },
     ];
