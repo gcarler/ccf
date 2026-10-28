@@ -169,7 +169,7 @@ class PMOPortfolioTotals(BaseModel):
     portfolio_spi: float
     portfolio_csi: float
     # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: el CPI/SPI agregado del portafolio
-    # se compone solo con proyectos de datos medibles; False => placeholder legacy.
+    # se compone solo con proyectos de datos medibles; False => placeholder heredado.
     portfolio_cpi_available: bool = Field(default=True, description="False si no hay proyectos con CPI medible")
     portfolio_spi_available: bool = Field(default=True, description="False si no hay proyectos con SPI medible")
 

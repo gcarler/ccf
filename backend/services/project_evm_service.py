@@ -667,7 +667,7 @@ def calculate_project_evm(
     #    Del hallazgo C2 (auditoría agy 2026-10-28): con gasto real (AC>0) y avance
     #    físico nulo monetizado (EV=0), el CPI real es 0 y la fórmula PMI aplicable
     #    es EAC = AC + (BAC - EV): todo lo gastado ya es sobrecosto terminal y el
-    #    saldo del BAC se ejecuta a CPI=1 implícito. El legacy EAC=BAC ocultaba el
+    #    saldo del BAC se ejecuta a CPI=1 implícito. La fórmula heredada EAC=BAC ocultaba el
     #    sobrecosto ya incurrido. Sin gasto (AC=0) ni avance (EV=0) se mantiene el
     #    eco del BAC (placeholder señalado por eac_available=False).
     cpi_available = bool(bac > 0.0 and ac > 0.0)
@@ -682,7 +682,7 @@ def calculate_project_evm(
     vac = round(bac - eac, 2)
 
     # 9b. Disponibilidad de indicadores y calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
-    #     Valores heredados (cpi/spi/eac legacy) se mantienen intactos para no romper el
+    #     Valores heredados (cpi/spi/eac de la cápsula anterior) se mantienen intactos para no romper el
     #     contrato; los flags indican al consumidor cuáles NO son medibles y no deben
     #     presentarse como reales:
     #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
@@ -4547,7 +4547,7 @@ def evaluate_control_account_variance_masking(
     }
 
 
-_LEGACY_ES_UNSET = object()
+_ES_UNSET_VERIFICADO_ADELANTADO = object()
 
 
 def evaluate_earned_schedule_performance(
@@ -4555,11 +4555,11 @@ def evaluate_earned_schedule_performance(
     actual_time_periods: float = 0.0,
     cumulative_pv_curve: list[float] | None = None,
     *,
-    planned_value_curve: Any = _LEGACY_ES_UNSET,
+    planned_value_curve: Any = _ES_UNSET_VERIFICADO_ADELANTADO,
     planned_duration_periods: Optional[float] = None,
 ) -> dict[str, Any]:
     """Evalúa el Cronograma Ganado (Earned Schedule - ES), SPI(t) y SV(t) proyectando EV sobre la curva acumulada de PV según PMI Practice Standard for EVM y PMBOK §7.4."""
-    if planned_value_curve is not _LEGACY_ES_UNSET:
+    if planned_value_curve is not _ES_UNSET_VERIFICADO_ADELANTADO:
         curve: List[float] = []
         if isinstance(planned_value_curve, list):
             for val in planned_value_curve:

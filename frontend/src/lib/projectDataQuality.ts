@@ -4,7 +4,7 @@
  * Contrato con backend (`_DATA_QUALITY_LABELS` en
  * `backend/services/project_evm_service.py`): el backend NO inventa valores;
  * envía `*_available: false` + `data_quality` y conserva los placeholders
- * legacy. Este módulo es el ÚNICO punto donde el frontend traduce esos
+ * heredados. Este módulo es el ÚNICO punto donde el frontend traduce esos
  * estados; los componentes NUNCA deben renderizar índices con
  * `*_available === false` como si fueran medibles.
  */

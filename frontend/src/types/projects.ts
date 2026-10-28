@@ -1343,7 +1343,7 @@ export interface ProjectEVMMetrics {
   financial_percentage: number;
   cpi: number;
   spi: number;
-  // TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: los placeholders legacy conservan
+  // TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: los placeholders heredados conservan
   // su valor, pero el consumidor NO debe presentarlos como medibles.
   cpi_available?: boolean;
   spi_available?: boolean;
