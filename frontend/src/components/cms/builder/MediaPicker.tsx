@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Check,
   FileImage,
@@ -115,7 +116,8 @@ export default function MediaPicker({
 
   if (!mounted) return null;
 
-  return (
+  return createPortal(
+    <div data-testid="cms-media-picker-layer" className="relative z-[1200]">
     <SidePanel
       isOpen={open}
       onClose={onClose}
@@ -210,5 +212,7 @@ export default function MediaPicker({
         </div>
       </div>
     </SidePanel>
+    </div>,
+    document.body,
   );
 }

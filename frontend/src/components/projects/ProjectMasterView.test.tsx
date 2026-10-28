@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ProjectMasterView } from './ProjectMasterView';
 import { createMockProject, createMockTask } from '@/test-utils/factories';
@@ -56,6 +56,14 @@ vi.mock('@/components/ui/inline-editors/InlineDatePicker', () => ({
 }));
 
 describe('ProjectMasterView PMI Triple Constraint & Node Governance', () => {
+  it('opens summary tools through the shared management hub', () => {
+    const onOpenTool = vi.fn();
+    render(<ProjectMasterView project={createMockProject()} tasks={[]} onOpenTool={onOpenTool} />);
+    fireEvent.click(screen.getByRole('button', { name: /Gestionar Riesgos/ }));
+    expect(onOpenTool).toHaveBeenCalledWith('risks');
+    fireEvent.click(screen.getByRole('button', { name: /Planificar Carga/ }));
+    expect(onOpenTool).toHaveBeenCalledWith('workload');
+  });
   it('renders PMI triple constraint synthesis banner with Scope (0/50/100), Cost (EVM CPI) and Schedule/RACI', () => {
     const project = createMockProject({
       id: 'proj-1',

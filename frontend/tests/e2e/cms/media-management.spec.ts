@@ -209,8 +209,8 @@ test.describe('CMS media management', () => {
     await deleteButton.click();
 
     // Confirmation dialog should appear
-    await expect(page.getByText('¿Eliminar permanentemente?')).toBeVisible();
-    await expect(page.getByText('Esta acción no se puede deshacer.')).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Eliminar permanentemente', exact: true })).toBeVisible();
+    await expect(page.getByText('Esta acción no se puede deshacer. Se borrará permanentemente de los servidores.', { exact: true })).toBeVisible();
 
     // Cancel the action — item should still be in the list
     await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
@@ -219,10 +219,10 @@ test.describe('CMS media management', () => {
     // Re-open the delete dialog and confirm
     await firstItem.hover();
     await deleteButton.click();
-    await expect(page.getByText('¿Eliminar permanentemente?')).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Eliminar permanentemente', exact: true })).toBeVisible();
 
     // Confirm deletion
-    const confirmationModal = page.locator('div.fixed.inset-0').filter({ hasText: '¿Eliminar permanentemente?' });
+    const confirmationModal = page.getByRole('dialog', { name: 'Eliminar permanentemente', exact: true });
     await confirmationModal.getByRole('button', { name: 'Eliminar', exact: true }).click();
 
     // The item should disappear from the list and count should decrease

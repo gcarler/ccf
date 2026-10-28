@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, ElementType } from 'react';
+import type { ProjectHubModuleKey } from './ProjectManagementHubDrawer';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
@@ -75,6 +76,7 @@ interface ProjectMasterViewProps {
     project: ProjectRecord;
     tasks: ProjectTaskRecord[];
     onOpenTask?: (task: ProjectTaskRecord) => void;
+    onOpenTool?: (key: ProjectHubModuleKey) => void;
 }
 
 /**
@@ -91,7 +93,11 @@ interface ProjectMasterViewProps {
  *    preservación del prefijo).
  *  - Hitos: CRUD completo inline (PATCH / DELETE / POST) + confirmación lateral.
  */
-export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterViewProps) {
+export function ProjectMasterView({ project, tasks, onOpenTask, onOpenTool }: ProjectMasterViewProps) {
+    const openTool = (key: ProjectHubModuleKey, openFallback: (open: boolean) => void) => {
+        if (onOpenTool) onOpenTool(key);
+        else openFallback(true);
+    };
     const { token } = useAuth();
     const { addToast } = useToast();
     const { reloadProject, updateProject, updateTask } = useProjectUpdate();
@@ -443,7 +449,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <button
-                            onClick={() => setShowProgressDrawer(true)}
+                            onClick={() => openTool('progress', setShowProgressDrawer)}
                             className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Configurar motor de avance y salud"
                         >
@@ -452,7 +458,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </button>
 
                         <button
-                            onClick={() => setShowTemplateDrawer(true)}
+                            onClick={() => openTool('templates', setShowTemplateDrawer)}
                             className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Catálogo de plantillas y guardar proyecto como plantilla"
                         >
@@ -461,7 +467,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </button>
 
                         <button
-                            onClick={() => setShowAutomationsDrawer(true)}
+                            onClick={() => openTool('automations', setShowAutomationsDrawer)}
                             className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Reglas y disparadores reactivos de automatización"
                         >
@@ -470,7 +476,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </button>
 
                         <button
-                            onClick={() => setShowReportDrawer(true)}
+                            onClick={() => openTool('reports', setShowReportDrawer)}
                             className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Informes ejecutivos en PDF y exportación Excel/CSV"
                         >
@@ -479,7 +485,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </button>
 
                         <button
-                            onClick={() => setShowEVMDrawer(true)}
+                            onClick={() => openTool('evm', setShowEVMDrawer)}
                             className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Gestión del Valor Ganado (EVM), Curva S y CPI"
                         >
@@ -488,7 +494,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </button>
 
                         <button
-                            onClick={() => setShowComponentDrawer(true)}
+                            onClick={() => openTool('components', setShowComponentDrawer)}
                             className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Estructura de Desglose del Trabajo (EDT Nivel 2) y Regla del 100%"
                         >
@@ -636,7 +642,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </span>
                     </div>
                     <button
-                        onClick={() => setShowKpiDrawer(true)}
+                        onClick={() => openTool('kpis', setShowKpiDrawer)}
                         className="px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs"
                     >
                         <Plus size={12} /> Gestionar KPIs
@@ -645,7 +651,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                 {kpis.length === 0 ? (
                     <div
-                        onClick={() => setShowKpiDrawer(true)}
+                        onClick={() => openTool('kpis', setShowKpiDrawer)}
                         className="p-4 rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer flex flex-col items-center justify-center text-center group"
                     >
                         <Target size={24} className="text-[hsl(var(--text-secondary))]/40 group-hover:text-[hsl(var(--primary))] transition-colors mb-1.5" />
@@ -709,7 +715,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             return (
                                 <div
                                     key={kpi.id}
-                                    onClick={() => setShowKpiDrawer(true)}
+                                    onClick={() => openTool('kpis', setShowKpiDrawer)}
                                     className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 transition-all cursor-pointer shadow-xs space-y-2 group"
                                 >
                                     <div className="flex items-start justify-between gap-1.5">
@@ -767,7 +773,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <Wallet className="text-[hsl(var(--primary))]" size={16} /> Control Presupuestario
                     </h2>
                     <button
-                        onClick={() => setShowBudgetDrawer(true)}
+                        onClick={() => openTool('budget', setShowBudgetDrawer)}
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
                     >
                         <Plus size={12} /> Gestionar Presupuesto
@@ -863,7 +869,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <TrendingUp className="text-[hsl(var(--primary))]" size={16} /> Desempeño Físico vs Financiero (EVM & Curva S)
                     </h2>
                     <button
-                        onClick={() => setShowEVMDrawer(true)}
+                        onClick={() => openTool('evm', setShowEVMDrawer)}
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
                     >
                         <BarChart3 size={12} /> Ver Curva S y Detalle EVM
@@ -929,7 +935,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <ShieldAlert className="text-[hsl(var(--destructive))]" size={16} /> Matriz RAID de Riesgos y Supuestos
                     </h2>
                     <button
-                        onClick={() => setShowRiskDrawer(true)}
+                        onClick={() => openTool('risks', setShowRiskDrawer)}
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/30 hover:bg-[hsl(var(--destructive))]/20 transition-all cursor-pointer"
                     >
                         <Plus size={12} /> Gestionar Riesgos (RAID)
@@ -947,7 +953,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                 </span>
                             </div>
                             <button
-                                onClick={() => setShowRiskDrawer(true)}
+                                onClick={() => openTool('risks', setShowRiskDrawer)}
                                 className="text-2xs font-medium uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--surface-1))] hover:opacity-90 shrink-0 cursor-pointer"
                             >
                                 Ver Matriz
@@ -1014,7 +1020,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <Users className="text-[hsl(var(--primary))]" size={16} /> Capacidad de Equipo y Carga de Trabajo
                     </h2>
                     <button
-                        onClick={() => setShowWorkloadDrawer(true)}
+                        onClick={() => openTool('workload', setShowWorkloadDrawer)}
                         className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
                     >
                         <Plus size={12} /> Planificar Carga
@@ -1032,7 +1038,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                 </span>
                             </div>
                             <button
-                                onClick={() => setShowWorkloadDrawer(true)}
+                                onClick={() => openTool('workload', setShowWorkloadDrawer)}
                                 className="text-2xs font-medium uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--danger-foreground))] hover:opacity-90 shrink-0 cursor-pointer"
                             >
                                 Rebalancear
@@ -1083,7 +1089,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     Distribución de Carga por Responsable
                                 </span>
                                 <button
-                                    onClick={() => setShowWorkloadDrawer(true)}
+                                    onClick={() => openTool('workload', setShowWorkloadDrawer)}
                                     className=" font-boldtext-[hsl(var(--primary))] hover:underline cursor-pointer"
                                 >
                                     Ver todos ({workloadSummary.members.length}) →
@@ -1147,7 +1153,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         )}
                     </div>
                     <button
-                        onClick={() => setShowTimeTrackingDrawer(true)}
+                        onClick={() => openTool('time', setShowTimeTrackingDrawer)}
                         className="px-3 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5"
                     >
                         <Clock size={12} className="text-[hsl(var(--primary))]" /> Hojas de Horas →
@@ -1211,7 +1217,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     Horas por Tarea Principal
                                 </span>
                                 <button
-                                    onClick={() => setShowTimeTrackingDrawer(true)}
+                                    onClick={() => openTool('time', setShowTimeTrackingDrawer)}
                                     className="text-2xs text-[hsl(var(--primary))] hover:underline font-semibold"
                                 >
                                     Ver desglose completo →

@@ -37,7 +37,7 @@ export default function WeekView({
   );
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div role="region" aria-label="Vista semanal" className="flex-1 flex flex-col overflow-hidden">
       {/* Day headers */}
       <div className="flex shrink-0 border-b border-[hsl(var(--border))]">
         <div className="w-16 shrink-0" />

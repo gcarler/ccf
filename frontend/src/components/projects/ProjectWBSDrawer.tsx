@@ -184,7 +184,9 @@ export function ProjectWBSDrawer({
             onClose={onClose}
             title={<div className="flex items-center gap-2"><ListTree className="text-[hsl(var(--primary))]" size={18} /><span className="font-bold text-sm uppercase tracking-tight">EDT / WBS y Diccionario</span></div>}
             subtitle={<span className="text-xs text-[hsl(var(--text-secondary))]">Jerarquía PMI, Regla del 100% y Cuentas de Control • {projectTitle}</span>}
-            width="w-full sm:max-w-4xl xl:max-w-6xl"
+            width="w-full sm:max-w-4xl xl:max-w-6xl max-w-none"
+            resizeStorageKey="workspace:project_tools_width"
+            resizeDefaultWidth={960}
         >
             <div className="space-y-4 p-4 sm:p-6" data-testid="project-wbs-drawer">
                 {loading && !treeData && <div role="status" className="space-y-2 animate-pulse"><div className="h-10 rounded-lg bg-[hsl(var(--surface-2))]" /><div className="h-10 rounded-lg bg-[hsl(var(--surface-2))]" /><div className="h-24 rounded-lg bg-[hsl(var(--surface-2))]" /></div>}

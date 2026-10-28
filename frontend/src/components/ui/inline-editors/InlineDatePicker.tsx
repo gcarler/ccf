@@ -154,7 +154,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
             "group flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
             "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]",
             open && "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--border))] dark:ring-white/10",
-            isOverdue ? "text-danger" : isToday2 ? "text-warning" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]",
+            isOverdue ? "text-[hsl(var(--danger-text))]" : isToday2 ? "text-[hsl(var(--warning-text))]" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           aria-label="Seleccionar fecha límite"

@@ -42,10 +42,10 @@ const MEDIA_FIXTURE = {
     {
       id: '1',
       title: 'Foto 1',
-      url: 'https://images.unsplash.com/photo-1500.jpg',
+      url: '/og-default.png',
       key: 'photo-1',
-      mimetype: 'image/jpeg',
-      mime_type: 'image/jpeg',
+      mimetype: 'image/png',
+      mime_type: 'image/png',
       size: 1024,
       created_at: '2026-01-01',
     },
@@ -60,6 +60,17 @@ async function setupPuckBuilderMocks(page: Page) {
     role: 'admin',
     permissions: { 'cms:read': 'allow', 'cms:edit': 'allow', 'cms:manage': 'allow' },
   });
+
+  await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/workflow`, async route => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    await route.fulfill({ status: 200, json: { id: 'page-home-1', site_id: SITE_KEY, slug: PAGE_SLUG, title: 'Home', status: 'published' } });
+  });
+  for (const collection of ['pages', 'posts', 'categories', 'post-comments']) {
+    await page.route(new RegExp(`/api/cms/v2/sites/${SITE_KEY}/${collection}(?:\\?.*)?$`), async route => {
+      if (route.request().method() === 'GET') await route.fulfill({ status: 200, json: [] });
+      else await route.fallback();
+    });
+  }
 
   // Mock initial sections list
   await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections`, async (route) => {
@@ -118,7 +129,7 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock CMS media endpoint
-  await page.route('**/api/cms/media', async (route) => {
+  await page.route(/\/api\/cms\/media(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -227,7 +238,11 @@ test.describe('Puck Builder Visual Editor Flow', () => {
     // Click manual "Guardar" button to force immediate sync if not already saved
     const saveBtn = page.getByRole('button', { name: 'Guardar' });
     await expect(saveBtn).toBeVisible();
+    const publishResponse = page.waitForResponse(response => response.url().endsWith(`/pages/${PAGE_SLUG}/workflow`) && response.request().method() === 'POST');
     await saveBtn.click();
+    const published = await publishResponse;
+    expect(published.status()).toBe(200);
+    expect(published.request().postDataJSON()).toEqual({ action: 'publish', notes: 'Publicado desde el editor visual' });
 
     // Verify final state status badge is "Guardado en borrador"
     await expect(page.getByText('Guardado en borrador')).toBeVisible();

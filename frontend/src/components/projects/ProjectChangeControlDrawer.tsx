@@ -22,6 +22,7 @@ interface ProjectChangeControlDrawerProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 interface ChangeRequestRecord {
@@ -86,7 +87,7 @@ const STATUS_META: Record<string, { label: string; icon: React.ElementType; clas
 const formatMoney = (value: number): string =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 
-export function ProjectChangeControlDrawer({ projectId, isOpen, onClose }: ProjectChangeControlDrawerProps) {
+export function ProjectChangeControlDrawer({ projectId, isOpen, onClose, embedded }: ProjectChangeControlDrawerProps) {
   const { token } = useAuth();
   const { addToast } = useToast();
 
@@ -227,7 +228,10 @@ export function ProjectChangeControlDrawer({ projectId, isOpen, onClose }: Proje
       subtitle="PMI Vol. 6 §5 — Dictamen formal del Comité · PMI Vol. 6 §4 — Criterios de Aceptación"
       open={isOpen}
       onClose={onClose}
-      width={560}
+      embedded={embedded}
+      width="w-full sm:w-[90vw] lg:w-[78vw] xl:w-[74vw] 2xl:w-[70vw] max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={960}
     >
       <div className="flex flex-col h-full space-y-4">
         {loadError && (

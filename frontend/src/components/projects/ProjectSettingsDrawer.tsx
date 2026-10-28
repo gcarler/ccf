@@ -82,7 +82,9 @@ export default function ProjectSettingsDrawer({
       open={isOpen}
       onClose={onClose}
       title="Editar proyecto"
-      width="w-full sm:max-w-md"
+      width="w-full sm:w-[80vw] lg:w-[60vw] xl:w-[48vw] max-w-none"
+      resizeStorageKey="workspace:project_settings_width"
+      resizeDefaultWidth={560}
       contentClassName="p-4"
     >
       <div className="space-y-5">

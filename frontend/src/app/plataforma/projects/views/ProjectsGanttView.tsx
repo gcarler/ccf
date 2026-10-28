@@ -95,8 +95,8 @@ export default function ProjectsGanttView({ projects, onItemClick }: ProjectsGan
                     className={clsx(
                         'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-2xs font-bold border',
                         scheduleDiagnostics.missingTargetCount > 0
-                            ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning))]'
-                            : 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]'
+                            ? 'border-[hsl(var(--warning)/0.35)] bg-[hsl(var(--warning)/0.12)] text-[hsl(var(--warning-text))]'
+                            : 'border-[hsl(var(--success)/0.35)] bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success-text))]'
                     )}
                 >
                     {scheduleDiagnostics.missingTargetCount > 0 ? (

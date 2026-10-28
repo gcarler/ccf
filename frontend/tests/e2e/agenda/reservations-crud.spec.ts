@@ -1,61 +1,21 @@
-import { expect, test, type Page } from '@playwright/test';
-import { installMockPlatformSession } from '../helpers/mockPlatformSession';
+import { expect, test } from '@playwright/test';
+import { EVENT_ID, installOperationalMocks } from './operational-fixtures';
 
-type Reservation = {
-  id: string;
-  resourceId: string;
-  resourceName: string;
-  startsAt: string;
-  endsAt: string;
-};
-
-const MOCK_RESERVATIONS: Reservation[] = [
-  {
-    id: 'res-1',
-    resourceId: 'r-1',
-    resourceName: 'Sala de conferencias',
-    startsAt: '2026-07-28T10:00:00.000Z',
-    endsAt: '2026-07-28T12:00:00.000Z',
-  },
-];
-
-async function installMocks(page: Page) {
-  await installMockPlatformSession(page, {
-    role: 'admin',
-    permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
+test.describe('Reservations read contract @agenda', () => {
+  test.beforeEach(async ({ page }) => {
+    await installOperationalMocks(page);
+    await page.goto(`/plataforma/agenda/events/${EVENT_ID}`);
   });
 
-  await page.route('**/api/agenda/events**', async (route) => {
-    const url = route.request().url();
-    if (url.includes('/reservations')) {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_RESERVATIONS) });
-    } else {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
-    }
+  test('displays the reserved resource on the owning Agenda detail', async ({ page }) => {
+    const reservations = page.getByRole('region', { name: 'Reservas del evento', exact: true });
+    await expect(reservations.getByText('Sala de conferencias', { exact: true })).toBeVisible();
+    await expect(reservations.getByRole('listitem')).toHaveCount(1);
   });
 
-  await page.route('**/api/system/calendar**', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
-  });
-
-  await page.route('**/api/projects/_tasks**', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ _tasks: [] }) });
-  });
-}
-
-test.describe('Reservations CRUD @agenda', () => {
-  test('displays reservation in calendar', async ({ page }) => {
-    await installMocks(page);
-    await page.goto('/plataforma/calendar');
-
-    await expect(page.locator('text=Sala de conferencias')).toBeVisible({ timeout: 10000 });
-  });
-
-  test('shows reservation time range', async ({ page }) => {
-    await installMocks(page);
-    await page.goto('/plataforma/calendar');
-
-    await expect(page.locator('text=10:00')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=12:00')).toBeVisible();
+  test('shows the reservation time range', async ({ page }) => {
+    const reservations = page.getByRole('region', { name: 'Reservas del evento', exact: true });
+    await expect(reservations.getByText('10:00', { exact: true })).toBeVisible();
+    await expect(reservations.getByText('12:00', { exact: true })).toBeVisible();
   });
 });

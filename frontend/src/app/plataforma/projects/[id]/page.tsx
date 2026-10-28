@@ -88,6 +88,7 @@ const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
   { key: 'reports', label: 'Reportes', icon: FileText },
   { key: 'indicators', label: 'Indicadores y Resultados', icon: BarChart3 },
   { key: 'ccb', label: 'Control de Cambios (CCB)', icon: Gavel },
+  { key: 'pmo', label: 'Matriz PMO', icon: BarChart3 },
   { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp },
   { key: 'drive', label: 'Drive', icon: FolderArchive },
   { key: 'governance', label: 'Gobernanza PMI', icon: ClipboardCheck },
@@ -281,6 +282,13 @@ const ProjectWBSDrawer = dynamic(
     ),
   { loading: ProjectDrawerLoading }
 );
+const ProjectPMOPortfolioDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectPMOPortfolioDrawer').then(
+      module => module.ProjectPMOPortfolioDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
 
 /**
  * Orquestador de la página de detalle de un proyecto.
@@ -466,6 +474,14 @@ export default function ProjectDetailPage() {
         action: () => openHubModule('wbs'),
       },
       {
+        id: 'project-detail-hub-pmo',
+        label: 'Abrir Matriz PMO',
+        description: 'Diagnóstico multi-proyecto CPI vs SPI y portafolio PMO',
+        icon: BarChart3,
+        group: 'Hub de gestión',
+        action: () => openHubModule('pmo'),
+      },
+      {
         id: 'project-detail-hub-kpis',
         label: 'Abrir KPIs',
         description: 'Indicadores clave de desempeño del proyecto',
@@ -521,6 +537,9 @@ export default function ProjectDetailPage() {
 
   const [showContextPanel, setShowContextPanel] = useState(true);
   const [isContextMaximized, setIsContextMaximized] = useState(false);
+  // Ancho actual del panel de contexto (px): publica el hub de herramientas
+  // (offsetRight) para que coexistan lado a lado sin taparse (sin modales).
+  const [contextPanelWidth, setContextPanelWidth] = useState(380);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   const handleDeleteProject = async () => {
@@ -549,7 +568,8 @@ export default function ProjectDetailPage() {
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
     { key: 'components', label: 'Componentes EDT', icon: Layers, onSelect: () => openHubModule('components') },
-    { key: 'wbs', label: 'EDT / WBS y Diccionario', icon: ListTree, onSelect: () => openHubModule('wbs') },
+    { key: 'wbs', label: 'Desglose de Paquetes WBS', icon: ListTree, onSelect: () => openHubModule('wbs') },
+    { key: 'pmo', label: 'Matriz PMO', icon: BarChart3, onSelect: () => openHubModule('pmo') },
     { key: 'labels', label: 'Etiquetas', icon: Tag, onSelect: () => openHubModule('labels') },
     { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
     { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
@@ -708,12 +728,28 @@ export default function ProjectDetailPage() {
     ),
     ccb: () => (
       <ProjectChangeControlDrawer
+        embedded
         projectId={project?.id || id}
         isOpen
         onClose={() => closeHubModule('ccb')}
       />
     ),
+    pmo: () => (
+      <ProjectPMOPortfolioDrawer
+        embedded
+        isOpen
+        onClose={() => closeHubModule('pmo')}
+      />
+    ),
   } satisfies Partial<Record<ProjectHubModuleKey, () => React.ReactNode>>;
+
+  // Offset derecho del hub de herramientas: coexistir con el sidebar de
+  // contexto (sin backdrop modal) dejando ambos paneles visibles y
+  // redimensionables (ancho persistido workspace:project_tools_width).
+  const effectiveContextOffset =
+    showContextPanel && !isContextMaximized && viewType !== 'chat' && !selectedTask
+      ? contextPanelWidth
+      : 0;
 
   const wbsAveragePct = useMemo(() => {
     if (tasks.length === 0) return 0;
@@ -857,6 +893,27 @@ export default function ProjectDetailPage() {
             <span>Paquetes WBS: {tasks.length} paquete(s)</span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
+            {/* Selector de herramientas con conmutación directa: se puede pasar
+                de Horas a Etiquetas/Riesgos/Drive sin cerrar la activa (no-modal). */}
+            <label className="sr-only" htmlFor="project-detail-tools-switcher">
+              Conmutar herramienta del proyecto
+            </label>
+            <select
+              id="project-detail-tools-switcher"
+              value=""
+              onChange={(event) => {
+                const key = event.currentTarget.value as ProjectHubModuleKey | '';
+                if (key) openHubModule(key);
+              }}
+              className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors focus:outline-2 focus:outline-[hsl(var(--primary))]"
+            >
+              <option value="">Herramientas…</option>
+              {projectActions.map((action) => (
+                <option key={action.key} value={action.key}>
+                  {action.label}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               data-testid="project-detail-quick-evm"
@@ -902,6 +959,7 @@ export default function ProjectDetailPage() {
               onDeleteTask={handleDeleteFromPanel}
               setShowTaskModal={setShowTaskModal}
               setWhiteboardOpen={setWhiteboardOpen}
+              onOpenTool={openHubModule}
               setTaskCreationStatus={setTaskCreationStatus}
               onManageComponents={() => openHubModule('components')}
             />
@@ -910,6 +968,7 @@ export default function ProjectDetailPage() {
             <ProjectContextPanel
               tools={projectActions}
               onOpenTask={handleOpenTask}
+              onWidthChange={setContextPanelWidth}
               onClose={() => {
                 setShowContextPanel(false);
                 setIsContextMaximized(false);
@@ -996,6 +1055,7 @@ export default function ProjectDetailPage() {
             onCloseModule={closeHubModule}
             onCloseHub={closeHub}
             moduleRenderers={moduleRenderers}
+            offsetRight={effectiveContextOffset}
           />
         </DeferredMount>
 

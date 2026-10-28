@@ -212,7 +212,9 @@ export function AutomationRuleDrawer({
       title={rule ? "Editar Regla" : "Nueva Automatización"}
       subtitle="Constructor Trigger -> Action"
       description="Configura disparadores y acciones automáticas para tareas de proyecto."
-      width="w-full sm:max-w-lg"
+      width="w-full sm:w-[80vw] lg:w-[60vw] xl:w-[48vw] max-w-none"
+      resizeStorageKey="workspace:project_tools_width"
+      resizeDefaultWidth={640}
     >
       <form onSubmit={handleSubmit} className="space-y-5 p-4 text-[hsl(var(--foreground))]">
         {/* Diagnóstico y Presets de Automatización PMI §4.6 */}

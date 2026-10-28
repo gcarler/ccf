@@ -141,8 +141,9 @@ test('Projects Gantt valida dependencias y estados con API mockeada sin mutacion
   await expect(page.getByText('Tarea predecesora E2E').first()).toBeVisible();
   await expect(page.getByText('Tarea sucesora E2E').first()).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page);
-  const createTaskAction = page.getByRole('button', { name: /Nueva tarea/i });
-  const openActions = page.getByRole('button', { name: 'Abrir acciones del proyecto' });
+  const createTaskAction = page.getByRole('button', { name: 'Nueva actividad' });
+  const contextPanel = page.getByRole('complementary', { name: 'Contexto del proyecto' });
+  const openActions = contextPanel.getByRole('tab', { name: 'Herramientas', exact: true });
   await expect(createTaskAction).toBeVisible();
   await expect(openActions).toBeVisible();
   for (const control of [createTaskAction, openActions]) {
@@ -152,17 +153,23 @@ test('Projects Gantt valida dependencias y estados con API mockeada sin mutacion
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(391);
   }
   await openActions.click();
-  const actionsDrawer = page.getByRole('dialog', { name: 'Acciones del proyecto' });
-  await expect(actionsDrawer).toBeVisible();
-  await expectNoSeriousAccessibilityViolations(page, '[role="dialog"][aria-label="Acciones del proyecto"]');
+  const tools = contextPanel.getByRole('tabpanel', { name: 'Herramientas' });
+  await expect(tools).toBeVisible();
   for (const actionName of ['Pizarra', 'Fases', 'Presupuesto', 'Riesgos', 'Automatizaciones', 'Indicadores y Resultados', 'Editar proyecto']) {
-    await expect(actionsDrawer.getByRole('button', { name: actionName })).toBeVisible();
+    await expect(tools.getByRole('button', { name: actionName, exact: true })).toBeVisible();
   }
+  const openBudget = tools.getByRole('button', { name: 'Presupuesto', exact: true });
+  await openBudget.click();
+  const actionsDrawer = page.getByRole('dialog', { name: 'Centro de gestión del proyecto' });
+  await expect(actionsDrawer).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page, '[role="dialog"][aria-label="Centro de gestión del proyecto"]');
   const closeActions = actionsDrawer.getByRole('button', { name: 'Cerrar panel' });
-  await expect(closeActions).toBeFocused();
-  await page.keyboard.press('Escape');
+  await expect(actionsDrawer).not.toHaveAttribute('aria-modal', 'true');
+  await createTaskAction.focus();
+  await expect(createTaskAction).toBeFocused();
+  await closeActions.click();
   await expect(actionsDrawer).toHaveCount(0);
-  await expect(openActions).toBeFocused();
+  await expect(openBudget).toBeFocused();
 
   const mobileWidths = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -185,7 +192,7 @@ test('Projects Gantt valida dependencias y estados con API mockeada sin mutacion
   await page.keyboard.press('Enter');
   const taskDetail = page.getByRole('complementary', { name: 'Detalle de tarea' });
   await expect(taskDetail).toBeVisible();
-  await expect(taskDetail.getByRole('button', { name: 'Cerrar detalle de tarea' })).toBeVisible();
+  await expect(taskDetail.getByRole('button', { name: 'Cerrar detalle de actividad' })).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page, '[aria-label="Detalle de tarea"]');
   const taskDetailBounds = await taskDetail.boundingBox();
   expect(taskDetailBounds, 'El detalle de tarea debe permanecer visible en móvil').not.toBeNull();

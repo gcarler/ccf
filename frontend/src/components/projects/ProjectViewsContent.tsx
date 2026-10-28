@@ -11,6 +11,7 @@ import {
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectTaskRecord } from '@/types/projects';
+import type { ProjectHubModuleKey } from './ProjectManagementHubDrawer';
 
 function ProjectViewLoading() {
     return (
@@ -49,6 +50,7 @@ interface ProjectViewsContentProps {
     setTaskCreationStatus: (status: string) => void;
     setWhiteboardOpen: (open: boolean) => void;
     onManageComponents?: () => void;
+    onOpenTool?: (key: ProjectHubModuleKey) => void;
 }
 
 /**
@@ -71,6 +73,7 @@ export function ProjectViewsContent({
     setShowTaskModal,
     setTaskCreationStatus,
     setWhiteboardOpen: _setWhiteboardOpen,
+    onOpenTool,
     onManageComponents,
 }: ProjectViewsContentProps) {
     const { project, tasks, phases, activities, createTask, reloadProject, updateTask } = useProjectUpdate();
@@ -132,6 +135,7 @@ export function ProjectViewsContent({
                             project={project}
                             tasks={tasks}
                             onOpenTask={onOpenTask}
+                            onOpenTool={onOpenTool}
                         />
                     )}
                     <div className="min-h-[420px] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">

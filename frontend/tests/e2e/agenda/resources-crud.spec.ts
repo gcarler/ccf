@@ -1,53 +1,24 @@
-import { expect, test, type Page } from '@playwright/test';
-import { installMockPlatformSession } from '../helpers/mockPlatformSession';
+import { expect, test } from '@playwright/test';
+import { EVENT_ID, installOperationalMocks } from './operational-fixtures';
 
-type Resource = {
-  id: string;
-  name: string;
-  type: string;
-  capacity?: number;
-  location?: string;
-};
-
-const MOCK_RESOURCES: Resource[] = [
-  { id: 'res-1', name: 'Sala de conferencias', type: 'sala', capacity: 30, location: 'Piso 2' },
-  { id: 'res-2', name: 'Proyector portátil', type: 'equipo', capacity: 0, location: 'Almacén' },
-];
-
-async function installMocks(page: Page) {
-  await installMockPlatformSession(page, {
-    role: 'admin',
-    permissions: { 'spiritual_life:read': 'allow', 'spiritual_life:edit': 'allow' },
+test.describe('Resources read contract @agenda', () => {
+  test.beforeEach(async ({ page }) => {
+    await installOperationalMocks(page);
+    await page.goto(`/plataforma/agenda/events/${EVENT_ID}`);
   });
 
-  await page.route('**/api/agenda/resources**', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_RESOURCES) });
+  test('displays resource inventory on the owning Agenda detail', async ({ page }) => {
+    const resources = page.getByRole('region', { name: 'Recursos disponibles', exact: true });
+    await expect(resources.getByText('Sala de conferencias', { exact: true })).toBeVisible();
+    await expect(resources.getByText('Proyector portátil', { exact: true })).toBeVisible();
+    await expect(resources.getByRole('listitem')).toHaveCount(2);
   });
 
-  await page.route('**/api/system/calendar**', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
-  });
-
-  await page.route('**/api/projects/_tasks**', async (route) => {
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ _tasks: [] }) });
-  });
-}
-
-test.describe('Resources CRUD @agenda', () => {
-  test('displays resource list in sidebar', async ({ page }) => {
-    await installMocks(page);
-    await page.goto('/plataforma/calendar');
-
-    await expect(page.locator('text=Recursos')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Sala de conferencias')).toBeVisible();
-    await expect(page.locator('text=Proyector portátil')).toBeVisible();
-  });
-
-  test('shows resource type and location', async ({ page }) => {
-    await installMocks(page);
-    await page.goto('/plataforma/calendar');
-
-    await expect(page.locator('text=Piso 2')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Almacén')).toBeVisible();
+  test('shows canonical resource type and capacity', async ({ page }) => {
+    const resources = page.getByRole('region', { name: 'Recursos disponibles', exact: true });
+    await expect(resources.getByText('sala', { exact: true })).toBeVisible();
+    await expect(resources.getByText('equipo', { exact: true })).toBeVisible();
+    await expect(resources.getByText('Capacidad: 30', { exact: true })).toBeVisible();
+    await expect(resources.getByText('Capacidad: 1', { exact: true })).toBeVisible();
   });
 });

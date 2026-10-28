@@ -74,4 +74,24 @@ export async function installMockPlatformSession(
   await page.route('**/api/auth/v3/refresh**', fulfillRefresh);
   await page.route('**/api/v3/auth/logout**', fulfillLogout);
   await page.route('**/api/auth/v3/logout**', fulfillLogout);
+  await page.route('**/api/v3/auth/preferences', async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({ status: 200, json: { settings: {} } });
+    } else {
+      await route.fallback();
+    }
+  });
+  for (const [pattern, response] of [
+    ['**/api/workspace/config', {}],
+    ['**/api/messaging/notifications**', []],
+    ['**/api/wiki/pages/**', { id: 'e2e-wiki', title: 'E2E', content: '' }],
+  ] as const) {
+    await page.route(pattern, async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ status: 200, json: response });
+      } else {
+        await route.fallback();
+      }
+    });
+  }
 }

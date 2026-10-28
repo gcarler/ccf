@@ -138,6 +138,17 @@ test.describe('TKT-204 — Academy WCAG AA accessibility audit @academy-a11y', (
         waitUntil: 'domcontentloaded',
         timeout: 10_000,
       });
+      if (spec.slug === 'catalog') {
+        await expect(estudiantePage.getByRole('heading', {
+          name: 'Cursos y Programas Académicos', exact: true,
+        })).toBeVisible();
+        // The toolbar breadcrumb fades in after hydration. Audit its final
+        // rendered colors, rather than a translucent animation frame.
+        const breadcrumb = estudiantePage.locator('[data-workspace-toolbar] nav')
+          .getByText('Academia', { exact: true });
+        await expect(breadcrumb).toBeVisible();
+        await expect(breadcrumb.locator('..')).toHaveCSS('opacity', '1');
+      }
       await runAxeOnPage(estudiantePage, spec.slug);
     });
   }

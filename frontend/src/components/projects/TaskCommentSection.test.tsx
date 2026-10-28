@@ -63,7 +63,9 @@ describe('TaskCommentSection', () => {
     render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
 
     expect(await screen.findByTestId('task-comments-pmi-summary')).toBeInTheDocument();
-    expect(screen.getByTestId('task-comments-pmi-count-blocker')).toHaveTextContent('2');
+    await waitFor(() => {
+      expect(screen.getByTestId('task-comments-pmi-count-blocker')).toHaveTextContent('2');
+    });
     expect(screen.getByTestId('task-comments-pmi-count-decision')).toHaveTextContent('1');
     expect(screen.getByTestId('task-comments-pmi-count-evidence')).toHaveTextContent('1');
     expect(screen.getByTestId('task-comments-pmi-count-pinned')).toHaveTextContent('1');

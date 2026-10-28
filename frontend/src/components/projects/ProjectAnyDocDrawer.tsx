@@ -191,7 +191,9 @@ export function ProjectAnyDocDrawer({
                     Pipeline de Documentación PMI • {projectTitle}
                 </span>
             }
-            width="w-full sm:max-w-2xl md:max-w-3xl"
+            width="w-full sm:w-[88vw] lg:w-[76vw] xl:w-[68vw] max-w-none"
+            resizeStorageKey="workspace:project_tools_width"
+            resizeDefaultWidth={960}
         >
             <div className="p-4 sm:p-6 space-y-6">
                 {/* Tarjeta de Ingesta de Conocimiento y Activos OPA PMI §4.4 */}

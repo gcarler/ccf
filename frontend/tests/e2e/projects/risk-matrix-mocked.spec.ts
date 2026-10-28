@@ -185,9 +185,9 @@ test('RAID recovery and owner assignment stay inside mocked APIs', async ({ page
 
   await waitForStableRoute(page, `/plataforma/projects/${projectId}`);
   await page.getByRole('button', { name: 'Gestionar Riesgos (RAID)' }).click();
-  const drawer = page.getByRole('dialog', { name: 'Matriz RAID de Riesgos y Supuestos' });
+  const drawer = page.getByRole('dialog', { name: 'Centro de gestión del proyecto' });
   await expect(drawer.getByRole('alert')).toContainText('No se pudo cargar la matriz de riesgos.');
-  const drawerSelector = '[role="dialog"][aria-label="Matriz RAID de Riesgos y Supuestos"]';
+  const drawerSelector = '[role="dialog"][aria-label="Centro de gestión del proyecto"]';
   await expectNoAxeViolations(page, drawerSelector);
   await expect(drawer.getByText('No hay riesgos registrados con estos filtros')).toHaveCount(0);
 
