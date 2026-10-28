@@ -144,12 +144,11 @@ test('project tools share one resizable drawer and retain width across tools and
   await context
     .getByRole('button', { name: 'Desglose de Paquetes WBS', exact: true })
     .click();
-  const hub = page.getByRole('dialog', {
-    name: 'Centro de gestión del proyecto',
-  });
+  const hub = page.locator('[role="dialog"][aria-label="Centro de gestión del proyecto"], [role="complementary"][aria-label="Centro de gestión del proyecto"]');
   await expect(hub).toBeVisible();
   await expect(hub).toHaveCSS('transform', 'none');
-  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(hub).toHaveCount(1);
+  await expect(hub.locator('[role="dialog"], [role="complementary"]')).toHaveCount(0);
   await expect(hub.getByTestId('project-wbs-drawer')).toBeVisible();
   await expect(hub.getByRole('separator')).toHaveAttribute(
     'aria-valuenow',
@@ -182,7 +181,8 @@ test('project tools share one resizable drawer and retain width across tools and
   await context.getByRole('tab', { name: 'Herramientas', exact: true }).click();
   await context.getByRole('button', { name: 'Matriz PMO', exact: true }).click();
   await expect(hub.getByTestId('pmo-portfolio-drawer')).toBeVisible();
-  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(hub).toHaveCount(1);
+  await expect(hub.locator('[role="dialog"], [role="complementary"]')).toHaveCount(0);
   await hub
     .getByRole('button', { name: 'Pantalla completa', exact: true })
     .click();
@@ -191,7 +191,8 @@ test('project tools share one resizable drawer and retain width across tools and
     .click();
   await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
   await context.getByRole('button', { name: 'Componentes EDT', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(hub).toHaveCount(1);
+  await expect(hub.locator('[role="dialog"], [role="complementary"]')).toHaveCount(0);
   await expect(hub).toHaveCSS('width', `${persistedToolWidth}px`);
   await hub.getByRole('tab', { name: /EDT \/ WBS y Diccionario/ }).click();
   await expect(hub.getByTestId('project-wbs-drawer')).toBeVisible();
@@ -209,7 +210,8 @@ test('project tools share one resizable drawer and retain width across tools and
     await expect(
       hub.getByRole('heading', { name: heading, exact: true })
     ).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(1);
+    await expect(hub).toHaveCount(1);
+  await expect(hub.locator('[role="dialog"], [role="complementary"]')).toHaveCount(0);
     await hub.getByRole('separator').focus();
     await page.keyboard.press('ArrowRight');
     await expect(hub).toHaveCSS('width', `${persistedToolWidth - 24}px`);
