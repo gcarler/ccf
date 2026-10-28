@@ -675,27 +675,8 @@ def calculate_project_evm(
     #    saldo del BAC se ejecuta a CPI=1 implícito. La fórmula heredada EAC=BAC ocultaba el
     #    sobrecosto ya incurrido. Sin gasto (AC=0) ni avance (EV=0) se mantiene el
     #    eco del BAC (placeholder señalado por eac_available=False).
-    if ac > 0.0 and ev == 0.0:
-        eac = round(max(0.0, ac) + max(0.0, bac - ev), 2)
-    elif raw_cpi > 0:
-        # Preserve measured precision and never forecast below incurred AC.
-        eac = round(max(ac, bac / raw_cpi), 2)
-    else:
-        eac = max(ac, bac)
-    vac = round(bac - eac, 2)
-
-    # 9b. Disponibilidad de indicadores y calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
-    #     Valores heredados (cpi/spi/eac de la cápsula anterior) se mantienen intactos para no romper el
-    #     contrato; los flags indican al consumidor cuáles NO son medibles y no deben
-    #     presentarse como reales:
-    #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
-    #       1.0/2.0 de AC=0 es inventado, no medible. Con AC>0 y EV=0 el CPI=0 es
-    #       real y medible.
-    #     - SPI requiere valor planificado positivo (PV>0). Con PV=0 el placeholder
-    #       1.0/2.0 no mide cronograma.
-    #     - EAC es estimación solo con CPI real (o con la fórmula C2); sin CPI, el
-    #       eco del BAC no es un pronóstico.
-    #     Motivos prioritarios: sin_presupuesto (BAC<=0) domina sobre los demás.
+    # Calidad de datos primero: spi_available debe coincidir con data_quality.
+    # Con sin_cronograma el fallback pv = ev solo crea un PV placeholder.
     has_valid_schedule = bool(target_dt and target_dt > start_dt)
     tasks_with_due = sum(1 for t in tasks if _as_utc(t.due_date) is not None)
 
@@ -712,9 +693,32 @@ def calculate_project_evm(
     primary_data_quality_issue: Optional[str] = data_quality[0] if data_quality else None
 
     cpi_available = bool(bac > 0.0 and ac > 0.0)
-    spi_available = bool(
-        bac > 0.0 and pv > 0.0 and "sin_cronograma" not in data_quality
-    )
+    # SPI medible requiere presupuesto, PV computable Y cronograma válido.
+    # (audit rev 1, hallazgo 2: sin_cronograma => spi_available False)
+    spi_available = bool(bac > 0.0 and pv > 0.0 and "sin_cronograma" not in data_quality)
+
+    if ac > 0.0 and ev == 0.0:
+        eac = round(max(0.0, ac) + max(0.0, bac - ev), 2)
+    elif raw_cpi > 0:
+        # Preserve measured precision and never forecast below incurred AC.
+        eac = round(max(ac, bac / raw_cpi), 2)
+    else:
+        eac = max(ac, bac)
+    vac = round(bac - eac, 2)
+
+    # 9b. Disponibilidad de indicadores y calidad de datos (TKT-PROJECTS-EVM-NA-PHASE1-20261028-01).
+    #     Valores heredados (cpi/spi/eac de la cápsula anterior) se mantienen intactos para no romper el
+    #     contrato; los flags indican al consumidor cuáles NO son medibles y no deben
+    #     presentarse como reales:
+    #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
+    #       1.0/2.0 de AC=0 es inventado, no medible. Con AC>0 y EV=0 el CPI=0 es
+    #       real y medible.
+    #     - SPI requiere valor planificado positivo (PV>0) Y cronograma válido:
+    #       con sin_cronograma el placeholder pv = ev no mide cronograma.
+    #     - EAC es estimación solo con CPI real (o con la fórmula C2); sin CPI, el
+    #       eco del BAC no es un pronóstico.
+    #     Motivos prioritarios (calculados antes, sección 9): sin_presupuesto
+    #     (BAC<=0) domina sobre los demás.
     eac_available = bool(bac > 0.0 and cpi_available)
 
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
@@ -4558,7 +4562,7 @@ def evaluate_control_account_variance_masking(
     }
 
 
-_ES_UNSET_VERIFICADO_ADELANTADO = object()
+_ES_UNSET = object()
 
 
 def evaluate_earned_schedule_performance(
@@ -4566,11 +4570,11 @@ def evaluate_earned_schedule_performance(
     actual_time_periods: float = 0.0,
     cumulative_pv_curve: list[float] | None = None,
     *,
-    planned_value_curve: Any = _ES_UNSET_VERIFICADO_ADELANTADO,
+    planned_value_curve: Any = _ES_UNSET,
     planned_duration_periods: Optional[float] = None,
 ) -> dict[str, Any]:
     """Evalúa el Cronograma Ganado (Earned Schedule - ES), SPI(t) y SV(t) proyectando EV sobre la curva acumulada de PV según PMI Practice Standard for EVM y PMBOK §7.4."""
-    if planned_value_curve is not _ES_UNSET_VERIFICADO_ADELANTADO:
+    if planned_value_curve is not _ES_UNSET:
         curve: List[float] = []
         if isinstance(planned_value_curve, list):
             for val in planned_value_curve:

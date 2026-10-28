@@ -195,26 +195,35 @@ def test_evm_ac_cero_con_avance_cpi_placeholder_no_disponible():
 
 
 def test_evm_sin_cronograma_spi_no_disponible():
-    """Auditoría: sin target ni fechas -> SPI placeholder 1.0 n/d con motivo sin_cronograma."""
+    """Auditoría (rev 1, hallazgo 2/C3): sin target ni fechas, con gasto y avance reales,
+    el placeholder pv = ev no es cronograma medible -> SPI n/d aunque pv > 0."""
     db = _db_for_evm()
-    proj = _mock_project(budget_allocated=100000.0, budget_spent=0.0, manual_progress=0.0,target_days_ahead=0)
+    # Repro exacto de la auditoría: avance 20%, AC=100, sin target ni tareas.
+    proj = _mock_project(budget_allocated=100000.0, budget_spent=100.0, manual_progress=20.0, target_days_ahead=0)
     proj.target_date = None
     evm = calculate_project_evm(db, proj)
 
-    assert evm["spi"] == 1.0  # legacy
-    assert evm["spi_available"] is False
+    assert evm["ev"] > 0.0  # dc_EV placeholder real: pv = ev > 0 (fallback)
+    assert evm["spi"] == 1.0  # legacy intacto (compatibilidad H08)
     assert "sin_cronograma" in evm["data_quality"]
+    assert evm["spi_available"] is False  # no debe contradecir a su propio data_quality
 
 
 def test_evm_fechas_invertidas_tratadas_como_sin_cronograma():
-    """Fechas invertidas (target <= start) -> sin cronograma usable, SPI n/d."""
+    """Fechas invertidas (target <= start) con avance real -> SPI n/d, no óptimo."""
     db = _db_for_evm()
-    proj = _mock_project(budget_allocated=100000.0, budget_spent=0.0, manual_progress=0.0)
+    # Repro de la auditoría: avance 10%, AC=100, fechas invertidas.
+    proj = _mock_project(
+        budget_allocated=100000.0,
+        budget_spent=100.0,
+        manual_progress=10.0,
+        target_days_ahead=0,
+    )
     proj.target_date = proj.start_date  # invertida
     evm = calculate_project_evm(db, proj)
 
     assert "sin_cronograma" in evm["data_quality"]
-    assert evm["spi_available"] is False
+    assert evm["spi_available"] is False  # sin cronograma medible, aún con ev > 0
 
 
 def test_evm_tareas_sin_due_date_target_futuro_motivo_tareas_sin_fecha():
