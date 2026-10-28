@@ -12,6 +12,7 @@ from uuid import UUID
 from xml.sax.saxutils import escape as escape_xml_text  # nosec B406 # output text escaping only; never parses XML
 
 from sqlalchemy import and_, case, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
@@ -5683,6 +5684,35 @@ def create_project_indicator_record(
     if not indicator:
         raise ValueError("Indicador no encontrado o no pertenece a la sede (Axioma 3)")
 
+    # W2: unicidad parcial de mediciones vivas por (indicator_id, period).
+    # - Si la medición viva del período proviene del motor de sincronización
+    #   (auto), la medición manual del usuario la SUPERSEDE: se soft-deleta el
+    #   registro automático (historia conservada, Axioma 2) y se inserta el
+    #   manual. El re-sync posterior no recreará el auto (G3: no pisa manual).
+    # - Si la medición viva del período es manual, se rechaza el duplicado.
+    period_live_rec = (
+        db.query(models.ProjectIndicatorRecord)
+        .filter(
+            models.ProjectIndicatorRecord.indicator_id == indicator.id,
+            models.ProjectIndicatorRecord.period == record_in.period,
+            models.ProjectIndicatorRecord.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if period_live_rec is not None:
+        if _is_auto_sync_record(period_live_rec):
+            now_supersede = datetime.now(timezone.utc)
+            period_live_rec.deleted_at = now_supersede
+            period_live_rec.updated_at = now_supersede
+            # W2: marcar (flush) ANTES de insertar el manual para no violar
+            # el índice único parcial mientras la fila superada sigue viva.
+            db.flush()
+        else:
+            raise ValueError(
+                f"Ya existe una medición viva del indicador para el período "
+                f"'{record_in.period}' (W2: unicidad por período, sin duplicados)."
+            )
+
     target = float(record_in.target_value or 0.0)
     actual = float(record_in.actual_value or 0.0)
 
@@ -5960,28 +5990,59 @@ def sync_project_indicators_and_kpis(
                 )
                 .all()
             )
-            existing_rec = next((r for r in period_recs if _is_auto_sync_record(r)), None)
             spi_val = round(float(eval_res.get("spi") or 0.0), 4)
-            if existing_rec:
-                existing_rec.actual_value = float(eval_res["current_value"])
-                existing_rec.target_value = float(ind.target_value or eval_res.get("suggested_target") or 100.0)
-                existing_rec.spi = spi_val
-                existing_rec.updated_at = now
+            manual_rec = next((r for r in period_recs if not _is_auto_sync_record(r)), None)
+            auto_rec = next((r for r in period_recs if _is_auto_sync_record(r)), None)
+            if manual_rec is not None and auto_rec is None:
+                # G3 + W2: el manual del período permanece intocado y NO se
+                # crea un auto duplicado (índice único parcial vivo); el
+                # current_value ya se refrescó desde la ejecución arriba.
+                continue
+            if auto_rec is not None:
+                auto_rec.actual_value = float(eval_res["current_value"])
+                auto_rec.target_value = float(ind.target_value or eval_res.get("suggested_target") or 100.0)
+                auto_rec.spi = spi_val
+                auto_rec.updated_at = now
             else:
-                db.add(
-                    models.ProjectIndicatorRecord(
-                        indicator_id=ind.id,
-                        period=eff_period,
-                        target_value=float(ind.target_value or eval_res.get("suggested_target") or 100.0),
-                        actual_value=float(eval_res["current_value"]),
-                        spi=spi_val,
-                        notes=f"{AUTO_SYNC_NOTE_PREFIX} ({src}).",
-                        reported_by=eff_actor,
-                        reported_at=now,
-                        created_at=now,
-                        updated_at=now,
+                # W2: la creación del record automático corre en savepoint para
+                # sobrevivir a carreras concurrentes — si otro worker creó el
+                # registro del período, el índice único parcial denegará el
+                # INSERT (IntegrityError) y se resuelve refrescando/actualizando.
+                try:
+                    with db.begin_nested():
+                        db.add(
+                            models.ProjectIndicatorRecord(
+                                indicator_id=ind.id,
+                                period=eff_period,
+                                target_value=float(ind.target_value or eval_res.get("suggested_target") or 100.0),
+                                actual_value=float(eval_res["current_value"]),
+                                spi=spi_val,
+                                notes=f"{AUTO_SYNC_NOTE_PREFIX} ({src}).",
+                                reported_by=eff_actor,
+                                reported_at=now,
+                                created_at=now,
+                                updated_at=now,
+                            )
+                        )
+                        db.flush()
+                except IntegrityError:
+                    # El savepoint se revirtió al salir del `with` (W2): el
+                    # INSERT perdió la carrera contra otro registro vivo.
+                    raced_rec = (
+                        db.query(models.ProjectIndicatorRecord)
+                        .filter(
+                            models.ProjectIndicatorRecord.indicator_id == ind.id,
+                            models.ProjectIndicatorRecord.period == eff_period,
+                            models.ProjectIndicatorRecord.deleted_at.is_(None),
+                        )
+                        .first()
                     )
-                )
+                    if raced_rec is not None and _is_auto_sync_record(raced_rec):
+                        raced_rec.actual_value = float(eval_res["current_value"])
+                        raced_rec.target_value = float(ind.target_value or eval_res.get("suggested_target") or 100.0)
+                        raced_rec.spi = spi_val
+                        raced_rec.updated_at = now
+                    # Si el ganador de la carrera es un manual, no se toca (G3).
 
     # KPIs ejecutivos (6 Familias Pro)
     existing_kpis = (
