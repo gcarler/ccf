@@ -633,9 +633,16 @@ def calculate_project_evm(
     cr = round(cpi * spi, 2)
 
     # 9. Estimación y Variación a la Conclusión (EAC y VAC)
-    # Display precision must not erase a small, measured cost index.
-    # A forecast cannot be less than the cost already incurred.
-    if raw_cpi > 0:
+    #    Del hallazgo C2 (auditoría agy 2026-10-28): con gasto real (AC>0) y avance
+    #    físico nulo monetizado (EV=0), el CPI real es 0 y la fórmula PMI aplicable
+    #    es EAC = AC + (BAC - EV): todo lo gastado ya es sobrecosto terminal y el
+    #    saldo del BAC se ejecuta a CPI=1 implícito. El legacy EAC=BAC ocultaba el
+    #    sobrecosto ya incurrido. Sin gasto (AC=0) ni avance (EV=0) se mantiene el
+    #    eco del BAC (placeholder señalado por eac_available=False).
+    if ac > 0.0 and ev == 0.0:
+        eac = round(max(0.0, ac) + max(0.0, bac - ev), 2)
+    elif raw_cpi > 0:
+        # Preserve measured precision and never forecast below incurred AC.
         eac = round(max(ac, bac / raw_cpi), 2)
     else:
         eac = max(ac, bac)
@@ -646,18 +653,15 @@ def calculate_project_evm(
     #     contrato; los flags indican al consumidor cuáles NO son medibles y no deben
     #     presentarse como reales:
     #     - CPI requiere gasto real (AC>0) y presupuesto (BAC>0). El placeholder
-    #       1.0/2.0 de AC=0 es inventado, no medible.
+    #       1.0/2.0 de AC=0 es inventado, no medible. Con AC>0 y EV=0 el CPI=0 es
+    #       real y medible.
     #     - SPI requiere valor planificado positivo (PV>0). Con PV=0 el placeholder
     #       1.0/2.0 no mide cronograma.
-    #     - EAC = BAC/CPI solo es estimación con CPI real; sin CPI, EAC=BAC es un
-    #       eco del presupuesto, no un pronóstico.
+    #     - EAC es estimación solo con CPI real (o con la fórmula C2); sin CPI, el
+    #       eco del BAC no es un pronóstico.
     #     Motivos prioritarios: sin_presupuesto (BAC<=0) domina sobre los demás.
     has_valid_schedule = bool(target_dt and target_dt > start_dt)
     tasks_with_due = sum(1 for t in tasks if _as_utc(t.due_date) is not None)
-
-    cpi_available = bool(bac > 0.0 and ac > 0.0)
-    spi_available = bool(bac > 0.0 and pv > 0.0)
-    eac_available = bool(bac > 0.0 and cpi_available)
 
     data_quality: List[str] = []
     if bac <= 0.0:
@@ -670,6 +674,12 @@ def calculate_project_evm(
         data_quality.append("tareas_sin_fecha")
     data_quality = [code for code in DATA_QUALITY_CODES if code in data_quality]
     primary_data_quality_issue: Optional[str] = data_quality[0] if data_quality else None
+
+    cpi_available = bool(bac > 0.0 and ac > 0.0)
+    spi_available = bool(
+        bac > 0.0 and pv > 0.0 and "sin_cronograma" not in data_quality
+    )
+    eac_available = bool(bac > 0.0 and cpi_available)
 
     financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
 
