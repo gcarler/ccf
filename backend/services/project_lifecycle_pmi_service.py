@@ -31,17 +31,37 @@ def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
     projects = query.order_by(models.Project.title, models.Project.id).all()
     from backend.services.project_evm_service import calculate_project_evm
 
+    # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: los cuadrantes y el agregado del
+    # portafolio solo se calculan con proyectos de CPI/SPI medibles. Los proyectos
+    # con datos insuficientes (BAC=0, AC=0, sin cronograma, tareas sin fecha) se
+    # REPORTAN como categoría 'sin_datos' con su motivo (decisión de producto:
+    # los proyectos sin presupuesto definido se listan como pendientes, nunca
+    # ocultos); los valores legacy de CPI/SPI placeholder se conservan en la
+    # matriz por compatibilidad, marcados con *_available=False.
     quadrants = {
         "q1_optimal": 0,
         "q2_cost_acceleration": 0,
         "q3_underutilized_capacity": 0,
         "q4_critical_emergency": 0,
+        "sin_datos": 0,
     }
     projects_matrix = []
+    sin_datos_projects = []
     total_bac = 0.0
     total_ev = 0.0
     total_ac = 0.0
     total_pv = 0.0
+    # Acumuladores para el agregado del portafolio (solo datos medibles):
+    # cada índice usa su propia base (CPI: EV/AC de proyectos con CPI medible;
+    # SPI: EV/PV de proyectos con SPI medible).
+    available_cpi_ev = 0.0
+    available_cpi_ac = 0.0
+    available_spi_ev = 0.0
+    available_spi_pv = 0.0
+    any_cpi_available = False
+    any_spi_available = False
+
+    from backend.services.project_evm_service import DATA_QUALITY_LABELS
 
     for project in projects:
         evm = calculate_project_evm(db, project)
@@ -51,7 +71,15 @@ def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
         pv = float(evm.get("pv") or 0.0)
         cpi = float(evm.get("cpi") or 0.0)
         spi = float(evm.get("spi") or 0.0)
-        if cpi >= 1.0 and spi >= 1.0:
+        cpi_available = bool(evm.get("cpi_available", True))
+        spi_available = bool(evm.get("spi_available", True))
+        data_quality = list(evm.get("data_quality") or [])
+        primary_issue = evm.get("primary_data_quality_issue")
+        metrics_available = cpi_available and spi_available
+
+        if not metrics_available:
+            quadrant = "sin_datos"
+        elif cpi >= 1.0 and spi >= 1.0:
             quadrant = "q1_optimal"
         elif cpi < 1.0 and spi >= 1.0:
             quadrant = "q2_cost_acceleration"
@@ -64,9 +92,17 @@ def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
         total_ev += ev
         total_ac += ac
         total_pv += pv
+        if cpi_available:
+            any_cpi_available = True
+            available_cpi_ev += ev
+            available_cpi_ac += ac
+        if spi_available:
+            any_spi_available = True
+            available_spi_ev += ev
+            available_spi_pv += pv
 
         lifecycle = project.lifecycle
-        projects_matrix.append({
+        entry = {
             "project_id": str(project.id),
             "title": project.title,
             "status": project.status,
@@ -81,10 +117,24 @@ def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
             "quadrant": quadrant,
             "progress_pct": round(float(evm.get("progress_percentage") or 0.0), 1),
             "charter_status": lifecycle.charter_status if lifecycle else "draft",
-        })
+            "cpi_available": cpi_available,
+            "spi_available": spi_available,
+            "data_quality": data_quality,
+            "data_quality_labels": [
+                DATA_QUALITY_LABELS.get(code, code) for code in data_quality
+            ],
+            "primary_data_quality_issue": primary_issue,
+        }
+        projects_matrix.append(entry)
+        if not metrics_available:
+            sin_datos_projects.append(entry)
 
-    portfolio_cpi = round(total_ev / total_ac, 2) if total_ac > 0 else (1.0 if total_ev == 0 else 2.0)
-    portfolio_spi = round(total_ev / total_pv, 2) if total_pv > 0 else (1.0 if total_ev == 0 else 2.0)
+    portfolio_cpi = (
+        round(available_cpi_ev / available_cpi_ac, 2) if available_cpi_ac > 0 else (1.0 if available_cpi_ev == 0 else 2.0)
+    )
+    portfolio_spi = (
+        round(available_spi_ev / available_spi_pv, 2) if available_spi_pv > 0 else (1.0 if available_spi_ev == 0 else 2.0)
+    )
     portfolio_totals = {
         "total_projects": len(projects),
         "total_bac": round(total_bac, 2),
@@ -93,11 +143,14 @@ def build_pmo_portfolio_matrix(db: Session, sede_id: UUID | None) -> dict:
         "portfolio_cpi": portfolio_cpi,
         "portfolio_spi": portfolio_spi,
         "portfolio_csi": round(portfolio_cpi * portfolio_spi, 2),
+        "portfolio_cpi_available": any_cpi_available,
+        "portfolio_spi_available": any_spi_available,
     }
     return {
         "portfolio_totals": portfolio_totals,
         "quadrants_distribution": quadrants,
         "projects_matrix": projects_matrix,
+        "sin_datos_projects": sin_datos_projects,
     }
 
 

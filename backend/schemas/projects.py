@@ -148,9 +148,16 @@ class PMOPortfolioProject(BaseModel):
         "q2_cost_acceleration",
         "q3_underutilized_capacity",
         "q4_critical_emergency",
+        # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: CPI/SPI sin datos medibles.
+        "sin_datos",
     ]
     progress_pct: float
     charter_status: Literal["draft", "authorized"]
+    cpi_available: bool = Field(default=True, description="False si el CPI es placeholder (AC=0 o BAC=0)")
+    spi_available: bool = Field(default=True, description="False si el SPI es placeholder (PV=0 o BAC=0)")
+    data_quality: List[str] = Field(default_factory=list, description="Motivos de datos insuficientes del proyecto")
+    data_quality_labels: List[str] = Field(default_factory=list, description="Motivos legibles que corresponden a data_quality")
+    primary_data_quality_issue: Optional[str] = Field(default=None, description="Motivo principal prioritario")
 
 
 class PMOPortfolioTotals(BaseModel):
@@ -161,6 +168,10 @@ class PMOPortfolioTotals(BaseModel):
     portfolio_cpi: float
     portfolio_spi: float
     portfolio_csi: float
+    # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: el CPI/SPI agregado del portafolio
+    # se compone solo con proyectos de datos medibles; False => placeholder legacy.
+    portfolio_cpi_available: bool = Field(default=True, description="False si no hay proyectos con CPI medible")
+    portfolio_spi_available: bool = Field(default=True, description="False si no hay proyectos con SPI medible")
 
 
 class PMOPortfolioQuadrantsDistribution(BaseModel):
@@ -168,12 +179,19 @@ class PMOPortfolioQuadrantsDistribution(BaseModel):
     q2_cost_acceleration: int
     q3_underutilized_capacity: int
     q4_critical_emergency: int
+    # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: proyectos con CPI/SPI no medibles
+    # (BAC=0, AC=0, sin cronograma o tareas sin fecha) no se clasifican en
+    # cuadrantes con valores inventados; se reportan con su motivo.
+    sin_datos: int = 0
 
 
 class PMOPortfolioMatrixResponse(BaseModel):
     portfolio_totals: PMOPortfolioTotals
     quadrants_distribution: PMOPortfolioQuadrantsDistribution
     projects_matrix: List[PMOPortfolioProject] = Field(default_factory=list)
+    # TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: proyectos con datos insuficientes,
+    # listados como pendientes (NUNCA ocultos) con el motivo principal.
+    sin_datos_projects: List[PMOPortfolioProject] = Field(default_factory=list)
 
 
 class ProjectStakeholderCreate(BaseModel):
