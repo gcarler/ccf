@@ -12,10 +12,12 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, relationship
@@ -1055,6 +1057,21 @@ class ProjectIndicator(Base):
 
 class ProjectIndicatorRecord(Base):
     __tablename__ = "project_indicator_records"
+    # W2: unicidad parcial de mediciones vivas por (indicator_id, period).
+    # El WHERE `deleted_at IS NULL` respeta el soft delete (Axioma 2): los
+    # registros suprimidos (historia) no participan de la unicidad y las
+    # correcciones quedan trazables. Igual que la migración
+    # 20261028_0001_project_indicator_records_live_unique.
+    __table_args__ = (
+        Index(
+            "uq_project_indicator_records_indicator_period_live",
+            "indicator_id",
+            "period",
+            unique=True,
+            sqlite_where=text("deleted_at IS NULL"),
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     indicator_id = Column(UUID(as_uuid=True), ForeignKey("project_indicators.id", ondelete="CASCADE"), nullable=False, index=True)
