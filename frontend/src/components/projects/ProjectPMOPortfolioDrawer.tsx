@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { Activity, AlertTriangle, BarChart3, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, Info, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import RightPanel from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +12,7 @@ import type {
   ProjectDevelopmentApproach,
   ProjectPortfolioQuadrant,
 } from "@/types/projects";
+import { describeDataQuality, formatIndexOrNd } from "@/lib/projectDataQuality";
 
 interface ProjectPMOPortfolioDrawerProps {
   isOpen: boolean;
@@ -61,6 +62,15 @@ const QUADRANTS: Array<{
     diagnosis: "El proyecto avanza lento y consume más de lo previsto.",
     actions: ["Intervenir de inmediato desde la PMO.", "Revisar formalmente la línea base.", "Evaluar reducción de alcance o contratos."],
     borderClass: "border-[hsl(var(--destructive)/0.35)]",
+  },
+  // TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: categoría no medible (sin valores inventados).
+  {
+    id: "sin_datos",
+    title: "Sin Datos Medibles",
+    condition: "CPI n/d · SPI n/d",
+    diagnosis: "CPI y SPI no calculables: falta línea base autorizada, progreso reportado o transacciones de costo.",
+    actions: ["Activar la línea base del proyecto.", "Habilitar registro de costos y avance real.", "Reintroducir el proyecto a la matriz cuando existan datos medibles."],
+    borderClass: "border-[hsl(var(--border))]",
   },
 ];
 
@@ -115,6 +125,12 @@ export function ProjectPMOPortfolioDrawer({ isOpen, onClose, embedded }: Project
     && (quadrantFilter === "all" || project.quadrant === quadrantFilter)
   ), [approachFilter, data, quadrantFilter]);
 
+  // TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: totales consolidados solo medibles → n/d.
+  const totals = data?.portfolio_totals;
+  const portfolioCpiDisplay = formatIndexOrNd(totals?.portfolio_cpi ?? 0, totals?.portfolio_cpi_available, null);
+  const portfolioSpiDisplay = formatIndexOrNd(totals?.portfolio_spi ?? 0, totals?.portfolio_spi_available, null);
+  const csiUnavailable = portfolioCpiDisplay.unavailable || portfolioSpiDisplay.unavailable;
+
   if (!isOpen) return null;
 
   return (
@@ -140,9 +156,14 @@ export function ProjectPMOPortfolioDrawer({ isOpen, onClose, embedded }: Project
               <Metric label="BAC del portafolio" value={money(data.portfolio_totals.total_bac)} />
               <Metric label="Valor ganado (EV)" value={money(data.portfolio_totals.total_ev)} />
               <Metric label="Costo real (AC)" value={money(data.portfolio_totals.total_ac)} />
-              <Metric label="CPI consolidado" value={data.portfolio_totals.portfolio_cpi.toFixed(2)} />
-              <Metric label="SPI consolidado" value={data.portfolio_totals.portfolio_spi.toFixed(2)} />
-              <Metric label="CSI consolidado" value={data.portfolio_totals.portfolio_csi.toFixed(2)} />
+              <Metric label="CPI consolidado" value={portfolioCpiDisplay.text} />
+              <Metric label="SPI consolidado" value={portfolioSpiDisplay.text} />
+              <Metric
+                label="CSI consolidado"
+                value={csiUnavailable
+                  ? "n/d"
+                  : data.portfolio_totals.portfolio_csi.toFixed(2)}
+              />
             </div>
           </section>
 
@@ -168,10 +189,28 @@ export function ProjectPMOPortfolioDrawer({ isOpen, onClose, embedded }: Project
             <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))]">
               <table className="w-full min-w-[920px] border-collapse text-left text-xs">
                 <thead className="bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"><tr>{["Proyecto", "Estado", "Enfoque", "Tipología PMO", "CPI", "SPI", "CSI", "Avance", "Acta", "Cuadrante"].map(label => <th key={label} className="px-3 py-2.5 font-semibold">{label}</th>)}</tr></thead>
-                <tbody className="divide-y divide-[hsl(var(--border))]">{filteredProjects.map(project => <tr key={project.project_id} className="text-[hsl(var(--text-primary))]"><td className="px-3 py-2.5 font-semibold">{project.title}<span className="mt-0.5 block text-[10px] font-normal text-[hsl(var(--text-secondary))]">BAC {money(project.bac)} · EV {money(project.ev)} · AC {money(project.ac)}</span></td><td className="px-3 py-2.5">{project.status}</td><td className="px-3 py-2.5">{APPROACH_LABELS[project.development_approach]}</td><td className="px-3 py-2.5">{PMO_TYPE_LABELS[project.pmo_type]}</td><td className="px-3 py-2.5 tabular-nums">{project.cpi.toFixed(2)}</td><td className="px-3 py-2.5 tabular-nums">{project.spi.toFixed(2)}</td><td className="px-3 py-2.5 tabular-nums">{project.csi.toFixed(2)}</td><td className="px-3 py-2.5">{project.progress_pct.toFixed(1)}%</td><td className="px-3 py-2.5">{project.charter_status === "authorized" ? "Autorizada" : "Borrador"}</td><td className="px-3 py-2.5">{QUADRANT_LABELS[project.quadrant]}</td></tr>)}</tbody>
+                <tbody className="divide-y divide-[hsl(var(--border))]">{filteredProjects.map(project => <tr key={project.project_id} className="text-[hsl(var(--text-primary))]"><td className="px-3 py-2.5 font-semibold">{project.title}<span className="mt-0.5 block text-[10px] font-normal text-[hsl(var(--text-secondary))]">BAC {money(project.bac)} · EV {money(project.ev)} · AC {money(project.ac)}</span></td><td className="px-3 py-2.5">{project.status}</td><td className="px-3 py-2.5">{APPROACH_LABELS[project.development_approach]}</td><td className="px-3 py-2.5">{PMO_TYPE_LABELS[project.pmo_type]}</td><td className="px-3 py-2.5"><NdIndex value={project.cpi} available={project.cpi_available} reasons={project.data_quality} /></td><td className="px-3 py-2.5"><NdIndex value={project.spi} available={project.spi_available} reasons={project.data_quality} /></td><td className="px-3 py-2.5">{project.cpi_available === false || project.spi_available === false ? <span className="text-[hsl(var(--muted-foreground))]" title="Requiere CPI y SPI medibles">n/d</span> : <span className="tabular-nums">{project.csi.toFixed(2)}</span>}</td><td className="px-3 py-2.5">{project.progress_pct.toFixed(1)}%</td><td className="px-3 py-2.5">{project.charter_status === "authorized" ? "Autorizada" : "Borrador"}</td><td className="px-3 py-2.5">{QUADRANT_LABELS[project.quadrant]}</td></tr>)}</tbody>
               </table>
               {filteredProjects.length === 0 && <p className="p-6 text-center text-sm text-[hsl(var(--text-secondary))]">No hay proyectos para esos filtros.</p>}
             </div>
+            {data.sin_datos_projects && data.sin_datos_projects.length > 0 && (
+              <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4" data-testid="portfolio-sin-datos-detalle">
+                <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                  <Info size={14} />
+                  Motivos de proyectos sin datos medibles
+                </h3>
+                <ul className="mt-2 space-y-1.5">
+                  {data.sin_datos_projects.map(project => (
+                    <li key={project.project_id} className="text-xs text-[hsl(var(--text-primary))]">
+                      <span className="font-semibold">{project.title}</span>
+                      <span className="ml-2 text-[hsl(var(--text-secondary))]">
+                        {(project.data_quality_labels ?? (project.data_quality ?? []).map(describeDataQuality)).join(" · ") || "CPI/SPI no calculables"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         </>}
         {!loading && !error && !data && <div className="rounded-xl border border-dashed border-[hsl(var(--border))] p-8 text-center text-sm text-[hsl(var(--text-secondary))]">No hay datos de portafolio disponibles.</div>}
@@ -182,4 +221,24 @@ export function ProjectPMOPortfolioDrawer({ isOpen, onClose, embedded }: Project
 
 function Metric({ label, value }: { label: string; value: string }) {
   return <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3"><p className="text-xs text-[hsl(var(--text-secondary))]">{label}</p><p className="mt-1 text-lg font-bold tabular-nums text-[hsl(var(--text-primary))]">{value}</p></div>;
+}
+
+/**
+ * TKT-PROJECTS-EVM-NA-PHASE1-20261028-01: celda de índice con soporte n/d.
+ * Nunca presenta un placeholder como medible: muestra 'n/d' + motivo.
+ */
+function NdIndex({ value, available, reasons }: { value: number; available?: boolean; reasons?: string[] }) {
+  const display = formatIndexOrNd(value, available, reasons);
+  if (!display.unavailable) {
+    return <span className="tabular-nums">{display.text}</span>;
+  }
+  return (
+    <span
+      className="text-[hsl(var(--muted-foreground))]"
+      title={display.reasons.join(" · ")}
+    >
+      <span className="tabular-nums">{display.text}</span>
+      {display.reasons.length > 0 && <span className="ml-1 text-[10px] font-normal">{display.reasons[0]}</span>}
+    </span>
+  );
 }
