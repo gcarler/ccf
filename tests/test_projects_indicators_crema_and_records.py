@@ -6,7 +6,8 @@ docs/AUDITORIA_MOTOR_CALCULO_INDICADORES_PROYECTOS_20261021.md
 - G1: validate_crema_indicator (criterios, bandas de estado, determinismo).
 - G4: SPI con 4 decimales en mediciones manuales.
 - G5: SPI None con meta inválida (<= 0) + bandera target_value_valid.
-- G3: el upsert del sync preserva los records manuales del mismo período.
+- G3/W2: el sync no pisa ni duplica records manuales del mismo período
+  (unicidad parcial viva por indicador+período, superación trazable).
 - G6: indicadores huérfanos de componentes eliminados quedan marcados.
 - G2: hook reactivo notify_project_execution_change_safe refresca sin sembrar.
 """
@@ -16,11 +17,12 @@ import uuid
 from datetime import timedelta, timezone
 
 import pytest
+import sqlalchemy.exc
 
 from backend import models, schemas
 from backend.crud import projects as crud
+from backend.services import project_indicator_service
 from tests.conftest import seed_admin
-
 
 # ──────────────────────────────────────────────────────────────────────
 # G1 — validate_crema_indicator
@@ -243,6 +245,177 @@ def test_record_actualiza_current_value_del_indicador(db_session):
     assert float(ind.current_value) == 75.0
 
 
+# ──────────────────────────────────────────────────────────────────────
+# W1 — cronología: reportes extemporáneos no pisan current_value
+# ──────────────────────────────────────────────────────────────────────
+
+
+def _create_manual_indicator(db_session, project, persona, target=100.0):
+    return crud.create_project_indicator(
+        db_session,
+        project.id,
+        schemas.ProjectIndicatorCreate(
+            code="PRO-M",
+            name="Indicador manual de cronología W1",
+            description="Mediciones manuales sin fuente de ejecución",
+            level="PRODUCTO_PRINCIPAL",
+            calculation_type="PORCENTAJE_PROPORCION",
+            unit_of_measure="%",
+            target_value=target,
+        ),
+        created_by=persona.id,
+        sede_id=project.sede_id,
+    )
+
+
+def test_record_extemporaneo_no_pisa_current_value_cronologico(db_session):
+    """Hallazgo 11/D1: registrar 80 en octubre y luego 20 en septiembre debe
+    dejar current_value=80 (el más reciente por reported_at), no 20."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-atraso@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    now = datetime.datetime.now(timezone.utc)
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=80.0, reported_at=now
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 80.0
+
+    # Backfill extemporáneo: medición de septiembre con reported_at anterior
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=20.0,
+            reported_at=now - datetime.timedelta(days=20),
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 80.0  # W1: la cronología manda
+
+    listed = {i.id: i for i in crud.get_project_indicators(db_session, project.id, sede_id=sede.id)}
+    assert float(listed[ind.id].current_value) == 80.0
+    assert float(listed[ind.id].last_spi) == 0.8  # SPI del registro más reciente
+
+
+def test_record_cronologia_reporte_mas_reciente_gana_despues_del_backfill(db_session):
+    """Si el backfill llega primero y luego se registra el período actual,
+    el current_value refleja el reporte más reciente por reported_at."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-backfill@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    now = datetime.datetime.now(timezone.utc)
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=20.0,
+            reported_at=now - datetime.timedelta(days=20),
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=80.0, reported_at=now
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 80.0  # el más reciente por reported_at
+
+
+def test_record_empate_reported_at_resuelve_por_created_at(db_session):
+    """W1: con reported_at empatado (períodos distintos), el desempate es
+    created_at DESC (el más tardío registrado gana), determinismo estable."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-tie@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    reported_at = datetime.datetime(2026, 10, 15, 12, 0, tzinfo=timezone.utc)
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=40.0, reported_at=reported_at
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    second = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=55.0, reported_at=reported_at
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 55.0  # W1: created_at DESC como desempate
+    listed = {i.id: i for i in crud.get_project_indicators(db_session, project.id, sede_id=sede.id)}
+    assert float(listed[ind.id].last_spi) == 0.55  # SPI del registro crítico más reciente
+    assert second.spi == 0.55
+
+
+def test_record_soft_delete_del_mas_reciente_devuelve_al_anterior(db_session):
+    """W1 + Axioma 2: si el registro cronológicamente más reciente se soft-deleta,
+    el current_value vuelve a reflejar el anterior vivo (sin huesos vacíos)."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w1-softdel@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    now = datetime.datetime.now(timezone.utc)
+    primero = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-09", target_value=100.0, actual_value=30.0,
+            reported_at=now - datetime.timedelta(days=10),
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    ultimo = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(
+            period="2026-10", target_value=100.0, actual_value=70.0, reported_at=now
+        ),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 70.0
+
+    ultimo.deleted_at = datetime.datetime.now(timezone.utc)
+    ultimo.updated_at = datetime.datetime.now(timezone.utc)
+    db_session.commit()
+    project_indicator_service.apply_chronological_current_value(db_session, ind)
+    db_session.commit()
+    db_session.refresh(ind)
+    assert float(ind.current_value) == 30.0  # el último vivo restante es 2026-09
+    vivos = crud.get_project_indicator_records(db_session, ind.id, sede_id=sede.id)
+    assert {r.id for r in vivos} == {primero.id}
+
+
 def test_record_normaliza_reported_at_naive_a_utc(db_session):
     _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "record-tz@example.com")
     ind = _create_auto_indicator(db_session, project, persona, "pro_edt_progress")
@@ -293,11 +466,14 @@ def test_record_rechaza_indicador_de_otro_proyecto_axioma_3(db_session):
 
 
 # ──────────────────────────────────────────────────────────────────────
-# G3 — el sync no pisa records manuales del mismo período
+# G3/W2 — el sync no pisa ni duplica mediciones del mismo período
 # ──────────────────────────────────────────────────────────────────────
 
 
 def test_sync_preserva_record_manual_del_mismo_periodo(db_session):
+    """W2: una medición manual del período SUPERSEDE al record automático
+    (soft delete, historia trazable) y el re-sync no reintroduce un auto
+    duplicado: queda una sola medición viva por (indicator_id, period)."""
     _, persona, sede, project, comp, _ = _seed_project_with_task(
         db_session, "sync-manual@example.com", progress_pct=50.0, with_component=True
     )
@@ -311,6 +487,13 @@ def test_sync_preserva_record_manual_del_mismo_periodo(db_session):
         sede_id=sede.id,
         record_period="2026-10",
     )
+    auto_antes = [
+        r
+        for r in crud.get_project_indicator_records(db_session, ind.id, sede_id=sede.id, project_id=project.id)
+        if r.period == "2026-10" and (r.notes or "").startswith(crud.AUTO_SYNC_NOTE_PREFIX)
+    ]
+    assert len(auto_antes) == 1
+
     # 2) el usuario reporta una medición manual en el mismo período
     manual = crud.create_project_indicator_record(
         db_session,
@@ -322,7 +505,7 @@ def test_sync_preserva_record_manual_del_mismo_periodo(db_session):
         sede_id=sede.id,
         project_id=project.id,
     )
-    # 3) re-sync: el manual debe quedar intacto y coexistir un auto
+    # 3) re-sync: el manual queda como la ÚNICA medición viva del período
     crud.sync_project_indicators_and_kpis(
         db_session,
         project.id,
@@ -331,15 +514,135 @@ def test_sync_preserva_record_manual_del_mismo_periodo(db_session):
         record_period="2026-10",
     )
 
-    records = crud.get_project_indicator_records(db_session, ind.id, sede_id=sede.id, project_id=project.id)
-    del_periodo = [r for r in records if r.period == "2026-10"]
-    auto_recs = [r for r in del_periodo if (r.notes or "").startswith(crud.AUTO_SYNC_NOTE_PREFIX)]
-    assert len(auto_recs) >= 1
-    assert len(del_periodo) >= 2  # manual + auto coexisten
+    records_vivos = crud.get_project_indicator_records(db_session, ind.id, sede_id=sede.id, project_id=project.id)
+    del_periodo = [r for r in records_vivos if r.period == "2026-10"]
+    assert len(del_periodo) == 1  # W2: sin duplicados vivos
+    assert del_periodo[0].id == manual.id
 
-    manual_after = next(r for r in records if r.id == manual.id)
+    manual_after = next(r for r in records_vivos if r.id == manual.id)
     assert manual_after.actual_value == 99.0  # intocado por el motor
     assert manual_after.notes == "Medición manual del líder"
+
+    # El auto superado pasó a historia (soft delete, Axioma 2)
+    auto_superado = (
+        db_session.query(models.ProjectIndicatorRecord)
+        .filter(models.ProjectIndicatorRecord.id == auto_antes[0].id)
+        .first()
+    )
+    assert auto_superado is not None
+    assert auto_superado.deleted_at is not None
+
+
+def test_record_manual_duplicado_mismo_periodo_rechazado_w2(db_session):
+    """W2: una segunda medición manual VIVA del mismo (indicador, período) se
+    rechaza con ValueError (API: 400); en otro período sí se admite."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w2-dup@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+
+    crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(period="2026-10", target_value=100.0, actual_value=50.0),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    with pytest.raises(ValueError, match="W2"):
+        crud.create_project_indicator_record(
+            db_session,
+            ind.id,
+            schemas.ProjectIndicatorRecordCreate(period="2026-10", target_value=100.0, actual_value=60.0),
+            reported_by=persona.id,
+            sede_id=sede.id,
+            project_id=project.id,
+        )
+    # En un período distinto no hay conflicto (la unicidad es por período)
+    otro = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(period="2026-11", target_value=100.0, actual_value=60.0),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    assert otro.period == "2026-11"
+
+
+def test_record_manual_supercede_record_auto_del_periodo_w2(db_session):
+    """W2: la medición manual sobre un período ya registrado por el motor hace
+    soft delete del auto (historia trazable) e inserta el manual vivo."""
+    _, persona, sede, project, comp, _ = _seed_project_with_task(
+        db_session, "w2-supersede@example.com", progress_pct=50.0, with_component=True
+    )
+    ind = _create_auto_indicator(db_session, project, persona, "pro_edt_progress", component_id=comp.id)
+
+    crud.sync_project_indicators_and_kpis(
+        db_session, project.id, actor_id=persona.id, sede_id=sede.id, record_period="2026-10"
+    )
+    auto_antes = next(
+        r
+        for r in crud.get_project_indicator_records(db_session, ind.id, sede_id=sede.id, project_id=project.id)
+        if (r.notes or "").startswith(crud.AUTO_SYNC_NOTE_PREFIX)
+    )
+
+    manual = crud.create_project_indicator_record(
+        db_session,
+        ind.id,
+        schemas.ProjectIndicatorRecordCreate(period="2026-10", target_value=100.0, actual_value=88.0),
+        reported_by=persona.id,
+        sede_id=sede.id,
+        project_id=project.id,
+    )
+    assert manual.actual_value == 88.0
+
+    vivo_hoy = (
+        db_session.query(models.ProjectIndicatorRecord)
+        .filter(
+            models.ProjectIndicatorRecord.indicator_id == ind.id,
+            models.ProjectIndicatorRecord.period == "2026-10",
+            models.ProjectIndicatorRecord.deleted_at.is_(None),
+        )
+        .all()
+    )
+    assert {r.id for r in vivo_hoy} == {manual.id}  # W2: un solo vivo
+    db_session.refresh(auto_antes)
+    assert auto_antes.deleted_at is not None  # historia conservada (Axioma 2)
+
+
+def test_unicidad_parcial_w2_indice_en_vivos_no_en_soft_deleted(db_session):
+    """W2 a nivel de BD: el índice único parcial solo cubre filas vivas.
+    Duplicar dos vivas del mismo (indicador, período) viola el índice;
+    tras soft-deletar la primera, volver a crear el período es válido."""
+    _, persona, sede, project, _, _ = _seed_project_with_task(db_session, "w2-index@example.com")
+    ind = _create_manual_indicator(db_session, project, persona)
+    now = datetime.datetime.now(timezone.utc)
+
+    base = dict(
+        indicator_id=ind.id,
+        period="2026-10",
+        target_value=100.0,
+        actual_value=10.0,
+        reported_at=now,
+        created_at=now,
+        updated_at=now,
+    )
+    rec1 = models.ProjectIndicatorRecord(id=uuid.uuid4(), **base)
+    db_session.add(rec1)
+    db_session.commit()
+
+    rec2 = models.ProjectIndicatorRecord(id=uuid.uuid4(), **base)
+    db_session.add(rec2)
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+    # Soft delete de la viva: el período vuelve a estar disponible (historia)
+    rec1.deleted_at = now
+    db_session.commit()
+    rec3 = models.ProjectIndicatorRecord(id=uuid.uuid4(), **base)
+    db_session.add(rec3)
+    db_session.commit()  # no viola: el índice solo cubre vivos
+    assert rec3.id != rec1.id
 
 
 def test_sync_sin_actor_no_persiste_records_axioma_autoria(db_session):

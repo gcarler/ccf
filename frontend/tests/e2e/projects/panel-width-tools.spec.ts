@@ -73,7 +73,7 @@ test('project tools share one resizable drawer and retain width across tools and
     else if (path.endsWith('/pmo-portfolio-matrix'))
       body = {
         portfolio_totals: { total_projects: 0, total_bac: 0, total_ev: 0, total_ac: 0, portfolio_cpi: 1, portfolio_spi: 1, portfolio_csi: 1 },
-        quadrants_distribution: { q1_optimal: 0, q2_cost_acceleration: 0, q3_underutilized_capacity: 0, q4_critical_emergency: 0 },
+        quadrants_distribution: { q1_optimal: 0, q2_cost_acceleration: 0, q3_underutilized_capacity: 0, q4_critical_emergency: 0, sin_datos: 0 },
         projects_matrix: [],
       } satisfies PMOPortfolioMatrixResponse;
     else if (path.endsWith('/analytics'))

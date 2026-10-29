@@ -122,6 +122,206 @@ def test_evm_zero_cost_edge_case():
     assert evm["eac"] == 50000.0
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Disponibilidad de indicadores y calidad de datos (TKT-PROJECTS-EVM-NA-20261028)
+# Casos borde de la auditoría agy 2026-10-28: la API conserva el valor legacy
+# pero NO debe presentarse como medible cuando es placeholder inventado.
+# ─────────────────────────────────────────────────────────────────────────
+
+
+def _db_for_evm(tasks=None, expenses=None):
+    """Mock de Session que distingue modelos por clase en la primera llamada query()."""
+    from backend.models_projects import ProjectExpense, ProjectTask
+
+    db = MagicMock()
+
+    def query(model, *_args, **_kwargs):
+        chain = MagicMock()
+        if model is ProjectTask:
+            chain.filter.return_value.all.return_value = list(tasks or [])
+        elif model is ProjectExpense:
+            chain.filter.return_value.all.return_value = list(expenses or [])
+        else:
+            chain.filter.return_value.all.return_value = []
+            chain.filter.return_value.order_by.return_value.first.return_value = None
+        return chain
+
+    db.query.side_effect = query
+    return db
+
+
+def _mock_task(due_in_days=None, hours=8.0):
+    t = MagicMock()
+    t.id = uuid.uuid4()
+    t.parent_id = None
+    t.component_id = None
+    t.status = "todo"
+    t.estimated_hours = hours
+    t.physical_progress_pct = 0.0
+    t.due_date = (
+        datetime.datetime.now(timezone.utc) + timedelta(days=due_in_days)
+        if due_in_days is not None
+        else None
+    )
+    return t
+
+
+def test_evm_bac_cero_bandera_sin_presupuesto():
+    """Auditoría caso 1-8: BAC=0 -> CPI/SPI/EAC n/d con motivo prioritario sin_presupuesto."""
+    db = _db_for_evm()
+    proj = _mock_project(budget_allocated=0.0, budget_spent=0.0, manual_progress=40.0)
+    evm = calculate_project_evm(db, proj)
+
+    # Valores legacy intactos (compatibilidad), pero todos n/d
+    assert evm["bac"] == 0.0
+    assert evm["cpi_available"] is False
+    assert evm["spi_available"] is False
+    assert evm["eac_available"] is False
+    assert evm["data_quality"][0] == "sin_presupuesto"
+    assert evm["primary_data_quality_issue"] == "sin_presupuesto"
+
+
+def test_evm_ac_cero_con_avance_cpi_placeholder_no_disponible():
+    """Riesgo latente de la auditoría: AC=0 con avance (EV>0) -> CPI=2.0 placeholder n/d."""
+    db = _db_for_evm()
+    proj = _mock_project(budget_allocated=100000.0, budget_spent=0.0, manual_progress=30.0)
+    evm = calculate_project_evm(db, proj)
+
+    assert evm["cpi"] == 2.0  # legacy intacto
+    assert evm["cpi_available"] is False
+    assert evm["eac_available"] is False
+    assert "sin_gastos" in evm["data_quality"]
+    assert evm["primary_data_quality_issue"] == "sin_gastos"
+
+
+def test_evm_sin_cronograma_spi_no_disponible():
+    """Auditoría (rev 1, hallazgo 2/C3): sin target ni fechas, con gasto y avance reales,
+    el placeholder pv = ev no es cronograma medible -> SPI n/d aunque pv > 0."""
+    db = _db_for_evm()
+    # Repro exacto de la auditoría: avance 20%, AC=100, sin target ni tareas.
+    proj = _mock_project(budget_allocated=100000.0, budget_spent=100.0, manual_progress=20.0, target_days_ahead=0)
+    proj.target_date = None
+    evm = calculate_project_evm(db, proj)
+
+    assert evm["ev"] > 0.0  # dc_EV placeholder real: pv = ev > 0 (fallback)
+    assert evm["spi"] == 1.0  # legacy intacto (compatibilidad H08)
+    assert "sin_cronograma" in evm["data_quality"]
+    assert evm["spi_available"] is False  # no debe contradecir a su propio data_quality
+
+
+def test_evm_fechas_invertidas_tratadas_como_sin_cronograma():
+    """Fechas invertidas (target <= start) con avance real -> SPI n/d, no óptimo."""
+    db = _db_for_evm()
+    # Repro de la auditoría: avance 10%, AC=100, fechas invertidas.
+    proj = _mock_project(
+        budget_allocated=100000.0,
+        budget_spent=100.0,
+        manual_progress=10.0,
+        target_days_ahead=0,
+    )
+    proj.target_date = proj.start_date  # invertida
+    evm = calculate_project_evm(db, proj)
+
+    assert "sin_cronograma" in evm["data_quality"]
+    assert evm["spi_available"] is False  # sin cronograma medible, aún con ev > 0
+
+
+def test_evm_tareas_sin_due_date_target_futuro_motivo_tareas_sin_fecha():
+    """Auditoría: tareas sin due_date y target futuro -> PV=0, SPI n/d, motivo tareas_sin_fecha."""
+    task = _mock_task(due_in_days=None)
+    db = _db_for_evm(tasks=[task])
+    proj = _mock_project(
+        budget_allocated=100000.0,
+        budget_spent=0.0,
+        manual_progress=0.0,
+        progress_mode="auto",
+        target_days_ahead=30,
+    )
+    evm = calculate_project_evm(db, proj)
+
+    # Con tareas sin fecha y target futuro: ninguna vence -> PV=0 -> SPI placeholder
+    assert evm["pv"] == 0.0
+    assert evm["spi_available"] is False
+    assert "tareas_sin_fecha" in evm["data_quality"]
+
+
+def test_evm_tareas_con_due_date_vencidas_pv_realizado_spi_disponible():
+    """Tareas con fechas vencidas -> PV>0 real -> SPI medible desde datos."""
+    vencidas = [_mock_task(due_in_days=-5), _mock_task(due_in_days=-3)]
+    db = _db_for_evm(tasks=vencidas)
+    proj = _mock_project(
+        budget_allocated=100000.0,
+        budget_spent=0.0,
+        manual_progress=0.0,
+        progress_mode="auto",
+        target_days_ahead=30,
+    )
+    evm = calculate_project_evm(db, proj)
+
+    assert evm["pv"] > 0.0
+    assert "tareas_sin_fecha" not in evm["data_quality"]
+    assert "sin_cronograma" not in evm["data_quality"]
+
+
+def test_evm_sobrecosto_con_avance_cero_cpi_medible_bac_positivo():
+    """Gasto con avance 0 (auditoría): CPI=0 es medible (con AC>0 y BAC>0), no inventado.
+
+    Del hallazgo C2, la corrección del valor inventado previo (EAC=BAC ocultaba el
+    sobrecosto ya incurrido): EAC = AC + (BAC - EV) = 25k + 100k = 125k y VAC = -25k.
+    """
+    db = _db_for_evm()
+    proj = _mock_project(budget_allocated=100000.0, budget_spent=25000.0, manual_progress=0.0)
+    evm = calculate_project_evm(db, proj)
+
+    assert evm["ac"] == 25000.0
+    assert evm["ev"] == 0.0
+    assert evm["cpi"] == 0.0
+    assert evm["cpi_available"] is True
+    assert evm["eac"] == 125000.0
+    assert evm["vac"] == -25000.0
+    assert evm["eac_available"] is True
+    assert "sin_gastos" not in evm["data_quality"]
+
+
+def test_evm_progreso_fuera_de_rango_se_recorta():
+    """Progreso 120% y -5% se clampean a [0, 100] sin NaN ni excepciones."""
+    db = _db_for_evm()
+    alto = calculate_project_evm(db, _mock_project(
+        budget_allocated=100000.0, budget_spent=0.0, manual_progress=120.0
+    ))
+    bajo = calculate_project_evm(db, _mock_project(
+        budget_allocated=100000.0, budget_spent=0.0, manual_progress=-5.0
+    ))
+
+    assert alto["progress_percentage"] == 100.0
+    assert bajo["progress_percentage"] == 0.0
+
+
+def test_evm_proyecto_sano_totalmente_disponible():
+    """Proyecto con BAC>0, AC>0, cronograma válido y tareas con fechas: todo disponible."""
+    db = _db_for_evm()
+    proj = _mock_project(budget_allocated=100000.0, budget_spent=50000.0, manual_progress=50.0)
+    evm = calculate_project_evm(db, proj)
+
+    assert evm["cpi_available"] is True
+    assert evm["spi_available"] is True
+    assert evm["eac_available"] is True
+    assert evm["data_quality"] == []
+    assert evm["primary_data_quality_issue"] is None
+
+
+def test_evm_bac_cero_predomina_sobre_otros_motivos():
+    """Prioridad canónica: cuando BAC=0 y sin cronograma, el motivo principal es sin_presupuesto."""
+    db = _db_for_evm()
+    proj = _mock_project(budget_allocated=0.0, budget_spent=0.0, manual_progress=0.0)
+    proj.target_date = None
+    evm = calculate_project_evm(db, proj)
+
+    assert "sin_presupuesto" in evm["data_quality"]
+    assert "sin_cronograma" in evm["data_quality"]
+    assert evm["primary_data_quality_issue"] == "sin_presupuesto"
+
+
 def test_curve_s_generation():
     """Verifica que generate_curve_s_data retorne la serie temporal de PV, EV y AC."""
     db = MagicMock()
