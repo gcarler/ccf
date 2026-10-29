@@ -42,12 +42,20 @@ function normalizeSupply(value: unknown): TaskSupplyRecord | null {
         typeof row.status !== 'string'
     ) return null;
 
+    // Literal canónico de backend/schemas/projects.py (TaskSupplyBase.status).
+    const SUPPLY_STATUSES = [
+        'pending', 'ready', 'unavailable', 'received', 'approved', 'purchased', 'paid',
+    ] as const;
+    const supplyStatus = SUPPLY_STATUSES.includes(row.status as (typeof SUPPLY_STATUSES)[number])
+        ? (row.status as (typeof SUPPLY_STATUSES)[number])
+        : 'pending';
+
     return {
         id: row.id,
         task_id: row.task_id,
         item_name: row.item_name,
         quantity: row.quantity,
-        status: row.status,
+        status: supplyStatus,
     };
 }
 

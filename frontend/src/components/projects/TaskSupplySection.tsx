@@ -43,8 +43,13 @@ export default function TaskSupplySection({
     const pendingPlannedCost = supplies
         .filter(supply => supply.status === 'pending')
         .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
+    // PMI (’Comprometido en Orden’): solo valores canónicos del backend
+    // (TaskSupplyBase.status). "approved"/"purchased" sin imputación a gasto
+    // siguen siendo comprometidos; cuando el gasto se vincula pasan al bucket
+    // de imputación (Recibido/AC).
     const orderedCommittedCost = supplies
-        .filter(supply => supply.status === 'ordered')
+        .filter(supply => (supply.status === 'approved' || supply.status === 'purchased')
+            && !supply.linked_expense_id && !supply.expense_id)
         .reduce((total, supply) => total + computeSupplyTotal(supply), 0);
     const physicalReceivedCost = supplies
         .filter(supply => supply.status === 'received')
@@ -280,13 +285,12 @@ export default function TaskSupplySection({
                                     aria-label={`Estado de ${supply.item_name}`}
                                     value={supply.status}
                                     disabled={savingSupplyId === supply.id}
-                                    onChange={event => handleUpdateSupply(supply, { status: event.target.value })}
+                                    onChange={event => handleUpdateSupply(supply, { status: event.target.value as TaskSupplyRecord['status'] })}
                                     className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none"
                                 >
                                     <option value="pending">Pendiente</option>
                                     <option value="ready">Listo</option>
-                                    <option value="approved">Aprobado</option>
-                                    <option value="ordered">Ordenado</option>
+                                    <option value="approved">Aprobado (Ordenado)</option>
                                     <option value="purchased">Comprado</option>
                                     <option value="received">Recibido</option>
                                     <option value="paid">Pagado</option>

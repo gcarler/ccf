@@ -47,6 +47,8 @@ export interface ProjectKPI {
   project_id: string;
   title: string;
   description?: string | null;
+  // Porcentaje calculado por el backend (ProjectKPI.model_validate); no recalcular en cliente.
+  progress_percent: number;
   target_value: number;
   current_value: number;
   unit: string;
@@ -85,7 +87,8 @@ export interface ProjectExpense {
   amount: number;
   date: string;
   receipt_url?: string | null;
-  status: 'planned' | 'committed' | 'paid';
+  // Literal espejo de backend/schemas/projects.py (TaskSupplyStatus / ProjectExpenseBase).
+  status: 'planned' | 'committed' | 'approved' | 'paid';
   is_auto_generated?: boolean;
   source_supply_id?: string | null;
   created_by?: string | null;
@@ -397,7 +400,8 @@ export interface TaskSupplyRecord {
   task_id: string;
   item_name: string;
   quantity: number;
-  status: string;
+  // Literal espejo de backend/schemas/projects.py (TaskSupplyBase.status).
+  status: 'pending' | 'ready' | 'unavailable' | 'received' | 'approved' | 'purchased' | 'paid';
   unit_cost?: number;
   total_cost?: number;
   expense_id?: string | null;

@@ -1,18 +1,25 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import { ProjectMasterView } from './ProjectMasterView';
 import { createMockProject, createMockTask } from '@/test-utils/factories';
 
+// addToast se inspecciona desde los tests de resiliencia (TKT-GAP: feedback
+// visible en vez de catch silencioso).
+const { addToastMock, authTokenMock } = vi.hoisted(() => ({
+  addToastMock: vi.fn(),
+  authTokenMock: { current: null as string | null },
+}));
+
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({
-    token: null,
+    token: authTokenMock.current,
     user: null,
     loading: false,
     isAuthenticated: true,
   }),
   useOptionalAuth: () => ({
-    token: null,
+    token: authTokenMock.current,
     user: null,
     loading: false,
     isAuthenticated: true,
@@ -20,7 +27,7 @@ vi.mock('@/context/AuthContext', () => ({
 }));
 
 vi.mock('@/context/ToastContext', () => ({
-  useToast: () => ({ addToast: vi.fn() }),
+  useToast: () => ({ addToast: addToastMock }),
 }));
 
 vi.mock('@/context/ProjectUpdateContext', () => ({
@@ -54,6 +61,40 @@ vi.mock('@/components/ui/inline-editors', () => ({
 vi.mock('@/components/ui/inline-editors/InlineDatePicker', () => ({
   InlineDatePicker: ({ value }: { value: string | null }) => <span>{value ?? 'Sin fecha'}</span>,
 }));
+
+describe('ProjectMasterView resiliencia de resúmenes (TKT-PROJECTS-GAP)', () => {
+  it('notifica error visible en los 4 summary loaders cuando el backend falla', async () => {
+    const apiFetch = vi.mocked((await import('@/lib/http')).apiFetch);
+    addToastMock.mockClear();
+    apiFetch.mockRejectedValue(new Error('backend caído'));
+    authTokenMock.current = 'test-token';
+
+    render(<ProjectMasterView project={createMockProject()} tasks={[]} onOpenTool={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(addToastMock).toHaveBeenCalledWith(
+        'No se pudo cargar el presupuesto. Reintenta desde el control presupuestario.',
+        'error',
+      );
+      expect(addToastMock).toHaveBeenCalledWith(
+        'No se pudo cargar la matriz de riesgos. Reintenta desde la matriz RAID.',
+        'error',
+      );
+      expect(addToastMock).toHaveBeenCalledWith(
+        'No se pudo cargar la carga de trabajo. Reintenta desde el panel de capacidad.',
+        'error',
+      );
+      expect(addToastMock).toHaveBeenCalledWith(
+        'No se pudo cargar el registro de tiempo. Reintenta desde hojas de horas.',
+        'error',
+      );
+    }, { timeout: 2000 });
+    expect(addToastMock).toHaveBeenCalledTimes(4);
+  });
+  afterEach(() => {
+    authTokenMock.current = null;
+  });
+});
 
 describe('ProjectMasterView PMI Triple Constraint & Node Governance', () => {
   it('opens summary tools through the shared management hub', () => {
