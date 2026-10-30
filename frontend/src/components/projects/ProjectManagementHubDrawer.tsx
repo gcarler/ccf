@@ -58,12 +58,6 @@ interface ProjectManagementHubDrawerProps {
    */
   embedded?: boolean;
   /**
-   * Desplazamiento lateral (px) para coexistir con paneles adyacentes: el hub
-   * NO es modal (sin backdrop ni focus-trap), así que se retira del borde
-   * derecho el ancho del sidebar de contexto del proyecto para no taparlo.
-   */
-  offsetRight?: number;
-  /**
    * Renderers por módulo. Solo se invoca el del módulo activo, de modo que
    * nunca coexisten múltiples panels de módulo superpuestos.
    */
@@ -94,7 +88,6 @@ export function ProjectManagementHubDrawer({
   onCloseHub,
   title = 'Centro de gestión del proyecto',
   embedded,
-  offsetRight,
   moduleRenderers,
 }: ProjectManagementHubDrawerProps) {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -114,8 +107,7 @@ export function ProjectManagementHubDrawer({
   return (
     <RightPanel
       embedded={embedded}
-      hasBackdrop={false}
-      offsetRight={offsetRight}
+      hasBackdrop={true}
       open={isOpen}
       onClose={onCloseHub}
       title={title}
