@@ -137,8 +137,7 @@ export default function ProjectContextPanel({
 
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
 
-  // Publica el ancho actual del sidebar: el detalle lo usa para desplazar el
-  // hub de herramientas (offsetRight) y lograr coexistencia lado a lado.
+  // Notifica el ancho actual del sidebar para observadores opcionales del layout.
   useEffect(() => {
     onWidthChange?.(resize.width);
   }, [resize.width, onWidthChange]);

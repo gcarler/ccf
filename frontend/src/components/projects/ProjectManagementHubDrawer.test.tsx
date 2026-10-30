@@ -208,15 +208,14 @@ describe("ProjectManagementHubDrawer", () => {
     expect(props.onActivateModule).toHaveBeenCalledWith("wbs");
   });
 
-  it("operar en modo coexistencia: sin backdrop ni aria-modal y con offsetRight aplicado", () => {
-    renderHub({ offsetRight: 420 });
+  it("despliega exclusivamente en el sidebar derecho como drawer overlay canónico (con aria-modal y fijado a la derecha)", () => {
+    renderHub();
 
     const dialog = screen.getByRole("dialog");
-    // El hub NO es modal: el resto de la plataforma (sidebar de contexto,
-    // otras herramientas) debe seguir clickeable mientras se trabaja.
-    expect(dialog).not.toHaveAttribute("aria-modal");
-    // Se retira del borde derecho el ancho del panel de contexto adjacente.
-    expect(dialog).toHaveStyle({ right: "420px" });
+    // El hub se despliega exclusivamente en el sidebar derecho con aria-modal
+    // y sin desplazamiento offsetRight que provoque duplicación o aplastamiento.
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveClass("fixed", "right-0");
   });
 
   it("expone Matriz PMO en el Hub y monta solo su renderer activo", async () => {
