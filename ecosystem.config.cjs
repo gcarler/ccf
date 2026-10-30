@@ -44,13 +44,13 @@ module.exports = {
     },
 
     // ── CCF Frontend (Next.js start) ─────────────────────────
-    // Importante: usa `npm run start` (alias de `next start`) y bindea solo
-    // 127.0.0.1 para que Nginx siga siendo el único punto de exposición.
+    // Importante: ejecuta next directamente (sin wrapper npm) para gestión fiel
+    // de PID y señales SIGTERM limpias, bindeando a 127.0.0.1.
     {
       name: "ccf-frontend-staging",
       cwd: "/root/ccf/frontend",
-      script: "npm",
-      args: "run start -- -p 3000 -H 127.0.0.1",
+      script: "node_modules/next/dist/bin/next",
+      args: "start -p 3000 -H 127.0.0.1",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
