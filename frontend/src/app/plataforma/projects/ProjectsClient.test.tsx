@@ -106,12 +106,6 @@ vi.mock('@/components/projects/ProjectCreationDrawer', () => ({
     : null,
 }));
 
-vi.mock('@/components/projects/ProjectPMOPortfolioDrawer', () => ({
-  ProjectPMOPortfolioDrawer: ({ isOpen }: { isOpen: boolean }) => isOpen
-    ? <div role="dialog" aria-label="Matriz PMO CPI por SPI" />
-    : null,
-}));
-
 vi.mock('./views/ProjectsGridView', () => ({
   default: ({ projects, onUpdate, onDelete }: { projects: ProjectRecord[]; onUpdate: (id: string, patch: Partial<ProjectRecord>) => void; onDelete?: (id: string) => void }) => (
     <div>
@@ -147,11 +141,10 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
     );
   });
 
-  it('abre la Matriz PMO CPI×SPI desde el menú Herramientas del portafolio', () => {
+  it('no muestra el botón Herramientas en el encabezado del portafolio (confinado al sidebar derecho de proyectos)', () => {
     render(<ProjectsClient initialProjects={[]} initialViewType="list" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Herramientas' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Matriz PMO (CPI×SPI)' }));
-    expect(screen.getByRole('dialog', { name: 'Matriz PMO CPI por SPI' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Herramientas/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Nuevo Proyecto/i })).toBeInTheDocument();
   });
 
   it('muestra skeleton antes de resolver la carga inicial de proyectos', async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Folder, Layers, Plus, Search, Wrench } from 'lucide-react';
+import { Folder, Layers, Plus, Search } from 'lucide-react';
 import clsx from 'clsx';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -13,7 +13,6 @@ import type { CalendarEvent } from '@/components/ui/UniversalCalendarView';
 import type { GanttItem } from '@/components/ui/UniversalGanttView';
 import ProjectsShell from '@/components/projects/ProjectsShell';
 import ProjectCreationDrawer from '@/components/projects/ProjectCreationDrawer';
-import { ProjectPMOPortfolioDrawer } from '@/components/projects/ProjectPMOPortfolioDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { DSCard } from '@/design';
@@ -109,29 +108,6 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     );
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [showPMOPortfolio, setShowPMOPortfolio] = useState(false);
-    // Menú herramientas del head: agrupa acciones ejecutivas sin saturar el header.
-    const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
-    const toolsMenuRef = useRef<HTMLDivElement | null>(null);
-    useEffect(() => {
-        if (!toolsMenuOpen) return;
-        const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-            if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) {
-                setToolsMenuOpen(false);
-            }
-        };
-        const handleMenuKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') setToolsMenuOpen(false);
-        };
-        document.addEventListener('mousedown', handlePointerDown);
-        document.addEventListener('touchstart', handlePointerDown);
-        document.addEventListener('keydown', handleMenuKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', handlePointerDown);
-            document.removeEventListener('touchstart', handlePointerDown);
-            document.removeEventListener('keydown', handleMenuKeyDown);
-        };
-    }, [toolsMenuOpen]);
     const { updateProject, deleteProject } = useProjects();
     const projectsListRef = useRef<HTMLDivElement | null>(null);
     const projectRequestSequence = useRef(0);
@@ -560,47 +536,13 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             onSearch={handleSearchChange}
             showPmiDomain={false}
             rightActions={
-                <div className="flex items-center gap-2">
-                    <div ref={toolsMenuRef} className="relative">
-                        <button
-                            type="button"
-                            aria-haspopup="menu"
-                            aria-expanded={toolsMenuOpen}
-                            onClick={() => setToolsMenuOpen((open) => !open)}
-                            className="flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))]"
-                        >
-                            <Wrench size={14} /> Herramientas
-                        </button>
-                        {toolsMenuOpen && (
-                            <ul
-                                role="menu"
-                                aria-label="Herramientas del portafolio"
-                                className="absolute right-0 z-50 mt-2 min-w-52 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1 shadow-lg"
-                            >
-                                <li role="none">
-                                    <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={() => {
-                                            setToolsMenuOpen(false);
-                                            setShowPMOPortfolio(true);
-                                        }}
-                                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))]"
-                                    >
-                                        <BarChart3 size={14} /> Matriz PMO (CPI×SPI)
-                                    </button>
-                                </li>
-                            </ul>
-                        )}
-                    </div>
-                    <button
-                        onClick={() => setShowCreateForm(true)}
-                        className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
-                    >
-                        <Plus size={14} />
-                        Nuevo Proyecto
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                >
+                    <Plus size={14} />
+                    Nuevo Proyecto
+                </button>
             }
         >
             <ProjectCreationDrawer
@@ -608,7 +550,6 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 onClose={() => setShowCreateForm(false)}
                 onSubmit={handleCreateProject}
             />
-            <ProjectPMOPortfolioDrawer isOpen={showPMOPortfolio} onClose={() => setShowPMOPortfolio(false)} />
 
             <div className="flex items-center gap-2">
                 <label className="sr-only" htmlFor="projects-mobile-view">Vista de proyectos</label>
