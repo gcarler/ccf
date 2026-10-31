@@ -29,8 +29,14 @@ interface SidebarLayerContextType {
 
 const SidebarLayerContext = createContext<SidebarLayerContextType | null>(null);
 
-export function SidebarLayerProvider({ children }: { children: React.ReactNode }) {
-    const [layers, setLayers] = useState({ S1: true, S2: true, RIGHT: false });
+export function SidebarLayerProvider({
+    children,
+    initialLayers,
+}: {
+    children: React.ReactNode;
+    initialLayers?: { S1: boolean; S2: boolean; RIGHT: boolean };
+}) {
+    const [layers, setLayers] = useState(initialLayers ?? { S1: true, S2: true, RIGHT: false });
     const [rightMode, setRightMode] = useState<'push' | 'overlay'>('push');
     const [sidebarStack, setSidebarStack] = useState<SidebarPanel[]>([]);
     const [stackDirection, setStackDirection] = useState<'forward' | 'backward'>('forward');

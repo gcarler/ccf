@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
-import { ClipboardCheck, FolderArchive, ListTree, Target } from "lucide-react";
+import { ClipboardCheck, Edit3, FolderArchive, ListTree, Target } from "lucide-react";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import {
   ProjectManagementHubDrawer,
@@ -230,5 +230,29 @@ describe("ProjectManagementHubDrawer", () => {
     expect(screen.queryByTestId("kpis-content")).not.toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /Matriz PMO/ }));
     expect(props.onActivateModule).toHaveBeenCalledWith("pmo");
+  });
+
+  it("expone la herramienta Fases en el Hub y monta solo su renderer activo", async () => {
+    const user = userEvent.setup();
+    const phasesMeta: ProjectHubModuleMeta[] = [
+      ...META,
+      { key: "phases", label: "Fases", icon: Edit3 },
+    ];
+    const phasesRenderers = {
+      ...RENDERERS,
+      phases: () => <div data-testid="phases-content">Fases Manager</div>,
+    };
+    const { props } = renderHub({
+      openModules: ["phases"],
+      moduleMeta: phasesMeta,
+      activeModule: "phases",
+      moduleRenderers: phasesRenderers,
+    });
+
+    expect(screen.getByRole("tab", { name: /Fases/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("phases-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("kpis-content")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Fases/ }));
+    expect(props.onActivateModule).toHaveBeenCalledWith("phases");
   });
 });

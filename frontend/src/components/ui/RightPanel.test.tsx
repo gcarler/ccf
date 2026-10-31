@@ -5,8 +5,8 @@ import { axe } from 'jest-axe';
 import RightPanel from './RightPanel';
 import { SidebarLayerProvider } from '@/context/SidebarLayerContext';
 
-function renderWithProvider(ui: React.ReactElement) {
-  return render(<SidebarLayerProvider>{ui}</SidebarLayerProvider>);
+function renderWithProvider(ui: React.ReactElement, initialLayers?: { S1: boolean; S2: boolean; RIGHT: boolean }) {
+  return render(<SidebarLayerProvider initialLayers={initialLayers}>{ui}</SidebarLayerProvider>);
 }
 
 describe('RightPanel', () => {
@@ -138,13 +138,60 @@ describe('RightPanel', () => {
       expect(screen.getByRole('dialog', { name: 'Panel pegado' })).toHaveStyle({ right: '0px' });
     });
   });
-  it('keeps a resizable tool within the remaining desktop space beside context', () => {
+  it('keeps a resizable tool within the remaining desktop space beside context and sidebars (S1 + S2)', () => {
     const previousWidth = window.innerWidth;
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
     try {
+      // Con S1 (72px) y S2 (280px) abiertos por defecto: 1280 - 352 - 380 = 548px
       renderWithProvider(<RightPanel open resizable offsetRight={380} title="Adjacent tool"><p>Content</p></RightPanel>);
       const panel = screen.getByRole('dialog', { name: 'Adjacent tool' });
-      expect(panel).toHaveStyle({ right: '380px', width: '852px' });
+      expect(panel).toHaveStyle({ right: '380px', width: '548px' });
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: previousWidth });
+    }
+  });
+
+  it('respeta S1 cuando S2 está oculto y respeta pantalla completa cuando ambos están ocultos', () => {
+    const previousWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+    try {
+      // Regla 2: S2 oculto, S1 visible (72px) -> 1280 - 72 - 380 = 828px
+      const { unmount } = renderWithProvider(
+        <RightPanel open resizable offsetRight={380} title="S2 hidden tool"><p>Content</p></RightPanel>,
+        { S1: true, S2: false, RIGHT: false }
+      );
+      expect(screen.getByRole('dialog', { name: 'S2 hidden tool' })).toHaveStyle({ right: '380px', width: '828px' });
+      unmount();
+
+      // Regla 3: Ambos S1 y S2 ocultos -> reservedWidth = leftBoundary(0) + 380 = 380 -> 1280 - 380 = 900px
+      renderWithProvider(
+        <RightPanel open resizable offsetRight={380} title="Both hidden tool"><p>Content</p></RightPanel>,
+        { S1: false, S2: false, RIGHT: false }
+      );
+      expect(screen.getByRole('dialog', { name: 'Both hidden tool' })).toHaveStyle({ right: '380px', width: '900px' });
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: previousWidth });
+    }
+  });
+
+  it('confinamiento cuando el panel se maximiza: respeta límite S1+S2 en desktop y 100vw cuando están ocultos', () => {
+    const previousWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+    try {
+      // Maximizado con S1 y S2 abiertos: ancho calc(100vw - 352px)
+      const { unmount } = renderWithProvider(
+        <RightPanel open maximized title="Maximized with sidebars"><p>Content</p></RightPanel>
+      );
+      const panel = screen.getByRole('dialog', { name: 'Maximized with sidebars' });
+      expect(panel).toHaveStyle({ width: 'calc(100vw - 352px)' });
+      unmount();
+
+      // Maximizado con ambos sidebars ocultos: ancho 100vw
+      renderWithProvider(
+        <RightPanel open maximized title="Maximized full"><p>Content</p></RightPanel>,
+        { S1: false, S2: false, RIGHT: false }
+      );
+      expect(screen.getByRole('dialog', { name: 'Maximized full' })).toHaveStyle({ width: '100vw' });
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: previousWidth });
     }

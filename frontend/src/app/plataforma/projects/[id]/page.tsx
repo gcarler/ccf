@@ -74,6 +74,7 @@ const TOOLBAR_ICON_BUTTON_CLASS =
 
 // Hub unificado de gestión: metadatos de los módulos de control.
 const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
+  { key: 'phases', label: 'Fases', icon: Edit3 },
   { key: 'components', label: 'Componentes EDT', icon: Layers },
   { key: 'wbs', label: 'EDT / WBS y Diccionario', icon: ListTree },
   { key: 'labels', label: 'Etiquetas', icon: Tag },
@@ -392,7 +393,6 @@ export default function ProjectDetailPage() {
   const [showProjectSettings, setShowProjectSettings] = useState(false);
   const [showAppearance, setShowAppearance] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
-  const [showPhaseManager, setShowPhaseManager] = useState(false);
   // Hub de gestión: una sola pestaña activa dentro de un único panel.
   const [hubState, setHubState] = useState<{
     open: ProjectHubModuleKey[];
@@ -563,7 +563,7 @@ export default function ProjectDetailPage() {
     visible?: boolean;
   }[] = [
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
-    { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
+    { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => openHubModule('phases') },
     { key: 'components', label: 'Componentes EDT', icon: Layers, onSelect: () => openHubModule('components') },
     { key: 'wbs', label: 'Desglose de Paquetes WBS', icon: ListTree, onSelect: () => openHubModule('wbs') },
     { key: 'pmo', label: 'Matriz PMO', icon: BarChart3, onSelect: () => openHubModule('pmo') },
@@ -586,6 +586,14 @@ export default function ProjectDetailPage() {
   ].filter((action) => action.visible !== false);
 
   const moduleRenderers = {
+    phases: () => (
+      <PhaseManagerDrawer
+        embedded
+        isOpen
+        projectId={project?.id || id}
+        onClose={() => closeHubModule('phases')}
+      />
+    ),
     components: () => (
       <ProjectComponentDrawer
         embedded
@@ -978,13 +986,7 @@ export default function ProjectDetailPage() {
             onClose={() => setWhiteboardOpen(false)}
           />
         </DeferredMount>
-        {showPhaseManager && (
-          <PhaseManagerDrawer
-            projectId={project?.id || id}
-            onClose={() => setShowPhaseManager(false)}
-          />
-        )}
-
+ 
         <DeferredMount open={showProjectSettings}>
           <ProjectSettingsDrawer
             project={project}

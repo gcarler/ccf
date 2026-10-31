@@ -10,6 +10,7 @@ import { RightPanel } from "@/components/ui/RightPanel";
  * El orden de la unión define el orden estable de la tira de pestañas.
  */
 export type ProjectHubModuleKey =
+  | 'phases'
   | 'components'
   | 'wbs'
   | 'pmo'
