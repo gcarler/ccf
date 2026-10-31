@@ -105,6 +105,20 @@ function RightPanel({
         ? Math.max(0, Math.min(offsetRight ?? 0, viewportWidth - 348))
         : 0;
 
+    // S1 ocupa ~72px en desktop cuando está visible; S2 ocupa el ancho configurado (default 280px)
+    const s1Width = layers.S1 ? 72 : 0;
+    const s2Width = layers.S2
+        ? (typeof window !== 'undefined'
+            ? (Number.parseInt(localStorage.getItem('s2Width') ?? '', 10) || 280)
+            : 280)
+        : 0;
+    const leftBoundary = viewportWidth >= 1024
+        ? (layers.S2 ? s1Width + s2Width : (layers.S1 ? s1Width : 0))
+        : 0;
+    const maxAvailableWidth = viewportWidth > 0
+        ? Math.max(320, viewportWidth - leftBoundary - effectiveOffset)
+        : undefined;
+
     const effectiveStorageKey = resizeStorageKey ?? (resizable ? 'workspace:right_panel_width' : undefined);
     const hasResizing = Boolean(effectiveStorageKey) && !maximized && !embedded;
 
@@ -112,7 +126,7 @@ function RightPanel({
     const resize = useResizablePanel({
         storageKey: effectiveStorageKey ?? 'workspace:right_panel_width',
         defaultWidth: resizeDefaultWidth,
-        reservedWidth: 48 + effectiveOffset,
+        reservedWidth: Math.max(48, leftBoundary + effectiveOffset),
         panelRef,
         enabled: hasResizing && Boolean(isOpen) && mounted,
     });
@@ -168,10 +182,23 @@ function RightPanel({
     const widthStyle = typeof width === 'number'
         ? { width: `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }
         : undefined;
-    const widthClass = typeof width === 'string' ? width : undefined;
+    const effectiveWidthClass = maximized ? undefined : (typeof width === 'string' ? width : undefined);
 
-    const panelStyle = {
+    const maximizedStyle: React.CSSProperties | undefined = maximized
+        ? {
+            width: viewportWidth >= 1024 && leftBoundary + effectiveOffset > 0
+                ? `calc(100vw - ${leftBoundary + effectiveOffset}px)`
+                : '100vw',
+            maxWidth: viewportWidth >= 1024 && leftBoundary + effectiveOffset > 0
+                ? `calc(100vw - ${leftBoundary + effectiveOffset}px)`
+                : '100vw',
+          }
+        : undefined;
+
+    const panelStyle: React.CSSProperties = {
         ...(hasResizing ? (resize.style as React.CSSProperties) : widthStyle),
+        ...(maximized ? maximizedStyle : null),
+        ...(maxAvailableWidth !== undefined && !embedded ? { maxWidth: maxAvailableWidth } : null),
         ...(offsetRight !== undefined
             ? { right: effectiveOffset ? `${effectiveOffset}px` : 0 }
             : null),
@@ -188,7 +215,7 @@ function RightPanel({
             style={panelStyle}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
-                widthClass,
+                effectiveWidthClass,
                 isControlled || rightMode === 'overlay'
                     ? clsx('fixed right-0 top-10 h-[calc(100vh-2.5rem)] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]', hasResizing ? 'z-[80]' : 'z-[35]')
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]',

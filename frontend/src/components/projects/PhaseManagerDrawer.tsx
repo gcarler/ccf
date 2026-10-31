@@ -13,6 +13,8 @@ import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/Confi
 interface Props {
     projectId: string;
     onClose: () => void;
+    isOpen?: boolean;
+    embedded?: boolean;
 }
 
 const COLOR_PRESETS = PHASE_COLOR_OPTIONS.map((option) => option.value);
@@ -79,7 +81,12 @@ function buildUniqueSlug(name: string, existingSlugs: Set<string>): string {
  *    bloquea con mensaje claro (el backend rechaza _assert_status_in_project_phases
  *    en PATCH posteriores al cambio de fases; mejor avisar antes).
  */
-export function PhaseManagerDrawer({ projectId, onClose }: Props) {
+export function PhaseManagerDrawer({
+    projectId,
+    onClose,
+    isOpen = true,
+    embedded = false,
+}: Props) {
     const { token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
     const { phases: ctxPhases, tasks: ctxTasks, reloadProject } = useProjectUpdate();
@@ -341,7 +348,9 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
 
     return (
         <RightPanel
-            open={true}
+            open={isOpen}
+            isOpen={isOpen}
+            embedded={embedded}
             onClose={onClose}
             title="Gestionar Fases"
             width="w-full sm:w-[85vw] lg:w-[68vw] xl:w-[60vw] max-w-none"
